@@ -1,0 +1,125 @@
+﻿@page "/weather"
+@using CsvHelper
+@using System.Globalization
+@using ReportAnalizerWASM.Client.Models
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+    <MudText Typo="Typo.h3" GutterBottom="true" Class="mud-text-primary">MP Analyzer</MudText>
+
+    <MudPaper Class="pa-6 mb-8" Elevation="4">
+        <MudText Typo="Typo.h6" Class="mb-4">1. Cargar Reporte CSV</MudText>
+        
+        @* Definimos Context="fileContext" para evitar conflictos de nombres *@
+        <MudFileUpload T="IBrowserFile" OnFilesChanged="ProcesarArchivo" Context="fileContext">
+            <ButtonTemplate>
+                <MudButton HtmlTag="label"
+                           Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.CloudUpload"
+                           for="fileContext.Id"> 
+                    Seleccionar Archivo
+                </MudButton>
+            </ButtonTemplate>
+        </MudFileUpload>
+    </MudPaper>
+
+    @if (resumen != null)
+    {
+        <MudGrid>
+            @* Tarjetas de Resumen *@
+            <MudItem xs="12" sm="4">
+                <MudPaper Class="pa-4 border-l-4 border-solid mud-border-primary" Elevation="2">
+                    <MudText Typo="Typo.subtitle2" Color="Color.Primary">Ventas Brutas</MudText>
+                    <MudText Typo="Typo.h4">@resumen.VentasTotales.ToString("C2")</MudText>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" sm="4">
+                <MudPaper Class="pa-4 border-l-4 border-solid mud-border-error" Elevation="2">
+                    <MudText Typo="Typo.subtitle2" Color="Color.Error">Costos (Comisión + IVA)</MudText>
+                    <MudText Typo="Typo.h4">-@((resumen.ComisionesTotales + resumen.ImpuestosTotales).ToString("C2"))</MudText>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" sm="4">
+                <MudPaper Class="pa-4 border-l-4 border-solid mud-border-success" Elevation="2">
+                    <MudText Typo="Typo.subtitle2" Color="Color.Success">Neto Real</MudText>
+                    <MudText Typo="Typo.h4">@resumen.NetoReal.ToString("C2")</MudText>
+                </MudPaper>
+            </MudItem>
+
+            @* Gráfico *@
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-6" Elevation="3">
+                    <MudText Typo="Typo.h6" Align="Align.Center" Class="mb-4">Desglose de la Operación</MudText>
+                    <MudChart ChartType="ChartType.Donut" 
+                              InputData="@graficoData" 
+                              InputLabels="@graficoLabels" 
+                              Width="100%" Height="300px" />
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    }
+</MudContainer>
+
+@code {
+    private ResumenEstadistico resumen;
+    private double[] graficoData;
+    private string[] graficoLabels = { "Neto", "Comisiones", "Impuestos" };
+
+    private async Task ProcesarArchivo(InputFileChangeEventArgs e)
+    {
+        try 
+        {
+            var file = e.File;
+            using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024); 
+            using var reader = new StreamReader(stream);
+            
+            var config = new CsvHelper.Configuration.CsvConfiguration(CultureInfo.InvariantCulture) 
+            { 
+                Delimiter = ";",
+                PrepareHeaderForMatch = args => args.Header.ToUpper(),
+                HeaderValidated = null,
+                MissingFieldFound = null 
+            };
+
+            using var csv = new CsvReader(reader, config);
+            var registros = csv.GetRecords<TransaccionMP>().ToList();
+
+            var nuevoResumen = new ResumenEstadistico();
+
+            foreach (var item in registros)
+            {
+                // Solo sumamos lo que es VENTA real (según tu CSV)
+                if (item.DESCRIPTION == "payment")
+                {
+                    nuevoResumen.VentasTotales += item.GROSS_AMOUNT;
+                    nuevoResumen.ComisionesTotales += Math.Abs(item.MP_FEE_AMOUNT);
+                    nuevoResumen.ImpuestosTotales += Math.Abs(item.TAXES_AMOUNT);
+                }
+            }
+
+            resumen = nuevoResumen;
+            
+            // Actualizamos los datos del gráfico
+            graficoData = new double[] { 
+                (double)resumen.NetoReal, 
+                (double)resumen.ComisionesTotales, 
+                (double)resumen.ImpuestosTotales 
+            };
+
+            StateHasChanged(); 
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al procesar: {ex.Message}");
+        }
+    }
+
+    public class ResumenEstadistico {
+        public decimal VentasTotales { get; set; }
+        public decimal ComisionesTotales { get; set; }
+        public decimal ImpuestosTotales { get; set; }
+        public decimal NetoReal => VentasTotales - ComisionesTotales - ImpuestosTotales;
+    }
+}
