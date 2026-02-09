@@ -31,5 +31,5 @@ app.UseAntiforgery();
 app.MapRazorComponents<App>()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(typeof(ReportAnalizerWASM.Client._Imports).Assembly);
-// Agrega esta línea antes de var app = builder.Build();
+
 app.Run();

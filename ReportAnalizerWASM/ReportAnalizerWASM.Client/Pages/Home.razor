@@ -94,8 +94,6 @@
     private string mensajeError = "";
     private bool cargando = false;
     private int ventasEncontradas = 0;
-
-    // Datos para gráficos
     private double[] graficoDonutData;
     private string[] graficoDonutLabels = { "Neto", "Comisiones", "Impuestos" };
     private List<ChartSeries> seriesBarras = new List<ChartSeries>();
@@ -106,8 +104,6 @@
         mensajeError = "";
         cargando = true;
         resumen = null;
-
-        // Limpiamos los gráficos para que no se queden con "basura" vieja
         seriesBarras = new List<ChartSeries>();
         labelsDias = new string[] { };
 
@@ -151,14 +147,13 @@
 
             resumen = nuevoResumen;
 
-            // --- GRÁFICO DONUT ---
+            // DONUT
             graficoDonutData = new double[] {
                 (double)resumen.NetoReal,
                 (double)resumen.ComisionesTotales,
                 (double)resumen.ImpuestosTotales
             };
 
-            // --- GRÁFICO BARRAS (SOLUCIÓN DEFINITIVA) ---
             var ventasPorDia = ventas
                 .GroupBy(x => DateTime.Parse(x.DATE).Date)
                 .OrderBy(g => g.Key)
@@ -171,25 +166,22 @@
                 new ChartSeries() { Name = "Ingresos", Data = ventasPorDia.Select(x => (double)x.Total).ToArray() }
             };
 
-            // 2. AQUÍ ESTÁ EL TRUCO PARA QUE NO SE ENCIMEN LOS TEXTOS
-            // Usamos una lista temporal para construir las etiquetas
+            // lista temporal para construir las etiquetas
             var etiquetasTemp = new List<string>();
 
             for (int i = 0; i < ventasPorDia.Count; i++)
             {
-                // Si es el primero, el último, o cada 5 días... mostramos la fecha
                 if (i == 0 || i == ventasPorDia.Count - 1 || i % 4 == 0)
                 {
                     etiquetasTemp.Add(ventasPorDia[i].Fecha.ToString("dd/MM"));
                 }
                 else
                 {
-                    // Si no, agregamos un espacio vacío (INVISIBLE)
                     etiquetasTemp.Add(" ");
                 }
             }
 
-            // Convertimos la lista a Array para que MudBlazor la entienda
+            // lista a Array para MudBlazor
             labelsDias = etiquetasTemp.ToArray();
 
             if (ventasEncontradas == 0) mensajeError = "No se encontraron ventas.";
