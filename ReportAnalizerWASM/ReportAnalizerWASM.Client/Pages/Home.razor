@@ -38,6 +38,7 @@
 
     @if (_ventas.Any())
     {
+        <div id="totales">
         <MudGrid Class="mb-4">
             <MudItem xs="12" sm="2">
                 <MudPaper Class="pa-3 mud-theme-primary">
@@ -79,7 +80,9 @@
                 </MudPaper>
             </MudItem>
         </MudGrid>
+        </div>
 
+        <div id="graficos">
         <MudGrid>
             <MudItem xs="12" md="6">
                 <MudPaper Class="pa-4">
@@ -99,7 +102,9 @@
                 </MudPaper>
             </MudItem>
         </MudGrid>
+        </div>
 
+        <div id="grillas">
         <MudDataGrid Items="@_ventas" Filterable="true" SortMode="SortMode.Multiple" Class="mt-4" Elevation="2">
             <Columns>
                 <PropertyColumn Property="x => x.FechaRaw" Title="Fecha" />
@@ -132,6 +137,7 @@
                 <MudDataGridPager T="VentaItem" />
             </PagerContent>
         </MudDataGrid>
+        </div>
     }
 </MudContainer>
 

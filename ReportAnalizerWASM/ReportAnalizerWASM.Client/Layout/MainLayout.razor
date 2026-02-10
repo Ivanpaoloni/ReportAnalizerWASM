@@ -1,49 +1,52 @@
 ﻿@inherits LayoutComponentBase
 
-<div class="page">
-    <div class="sidebar">
+<MudThemeProvider @bind-IsDarkMode="@_isDarkMode" Theme="_theme" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+
+    <MudAppBar Elevation="1" Fixed="true" Color="Color.Dark">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+
+        <MudText Typo="Typo.h6" Class="ml-3">Panel Financiero</MudText>
+
+        <MudSpacer />
+
+        <MudTooltip Text="@(_isDarkMode ? "Cambiar a Modo Claro" : "Cambiar a Modo Oscuro")">
+            <MudIconButton Icon="@(_isDarkMode? Icons.Material.Filled.Brightness7 : Icons.Material.Filled.Brightness4)"
+                           Color="Color.Inherit"
+                           OnClick="@((e) => _isDarkMode = !_isDarkMode)" />
+        </MudTooltip>
+    </MudAppBar>
+
+    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
         <NavMenu />
-    </div>
+    </MudDrawer>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+            @Body
+        </MudContainer>
+    </MudMainContent>
 
-        <article class="content px-4">
-            <MudThemeProvider @bind-IsDarkMode="@_isDarkMode" Theme="_theme" />
-            <MudPopoverProvider /> <MudDialogProvider />
-            <MudSnackbarProvider />
-
-            <MudLayout>
-                <MudAppBar Elevation="1">
-                    <MudText Typo="Typo.h5" Class="ml-3">Panel Financiero</MudText>
-                    <MudSpacer />
-
-                    <MudTooltip Text="@(_isDarkMode ? "Cambiar a Modo Claro" : "Cambiar a Modo Oscuro")">
-                        <MudIconButton Icon="@(_isDarkMode? Icons.Material.Filled.Brightness7 : Icons.Material.Filled.Brightness4)"
-                                       Color="Color.Inherit"
-                                       OnClick="@((e) => _isDarkMode = !_isDarkMode)" />
-                    </MudTooltip>
-                </MudAppBar>
-
-                <MudMainContent>
-                    <MudContainer MaxWidth="MaxWidth.Large" Class="my-4 pt-4">
-                        @Body
-                    </MudContainer>
-                </MudMainContent>
-            </MudLayout>
-        </article>
-    </main>
-</div>
-
-<div id="blazor-error-ui">
-    An unhandled error has occurred.
-    <a href="" class="reload">Reload</a>
-    <a class="dismiss">🗙</a>
-</div>
+</MudLayout>
 
 @code {
-    private bool _isDarkMode = false;
-    private MudTheme _theme = new MudTheme();
+    private bool _drawerOpen = true; // Controla si el menú lateral está abierto
+    private bool _isDarkMode = true; // Arranca en modo oscuro (más pro)
+    private MudTheme _theme = new MudTheme()
+    {
+        PaletteDark = new PaletteDark()
+        {
+            Primary = Colors.Blue.Lighten1, // Cambia el violeta por azul en modo oscuro
+            AppbarBackground = "#1a1a27" // Un fondo oscuro elegante para la barra
+        }
+    };
+
+    private void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
 }

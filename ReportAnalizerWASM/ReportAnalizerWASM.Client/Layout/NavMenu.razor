@@ -1,18 +1,22 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">ReportAnalizer</a>
-    </div>
-</div>
+﻿<MudNavMenu>
+    <MudText Typo="Typo.subtitle2" Color="Color.Inherit" Class="ml-4 my-2">ANÁLISIS</MudText>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-    </nav>
-</div>
+    <MudNavGroup Title="Finanzas" Icon="@Icons.Material.Filled.AttachMoney" Expanded="true">
+        <MudNavLink Href="impuestos" Icon="@Icons.Material.Filled.TrendingDown" Disabled>Retenciones e IIBB</MudNavLink>
+        <MudNavLink Href="comisiones" Icon="@Icons.Material.Filled.PieChart" Disabled>Comisiones MP</MudNavLink>
+    </MudNavGroup>
 
+    <MudNavGroup Title="Comercial" Icon="@Icons.Material.Filled.Store" Expanded="true">
+        <MudNavLink Href="productos" Icon="@Icons.Material.Filled.ShoppingBag" Disabled>Productos Top</MudNavLink>
+        <MudNavLink Href="clientes" Icon="@Icons.Material.Filled.People" Disabled>Clientes (Próx)</MudNavLink>
+    </MudNavGroup>
+
+    <MudDivider Class="my-2" />
+
+    <MudText Typo="Typo.subtitle2" Color="Color.Inherit" Class="ml-4 my-2">HERRAMIENTAS</MudText>
+
+    <MudNavLink Href="exportar" Icon="@Icons.Material.Filled.FileDownload" Disabled>Exportar a Excel</MudNavLink>
+    <MudNavLink Href="configuracion" Icon="@Icons.Material.Filled.Settings" Disabled>Configuración</MudNavLink>
+</MudNavMenu>
