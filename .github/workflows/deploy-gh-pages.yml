@@ -18,8 +18,31 @@ jobs:
           dotnet-version: '8.0.x'
 
       # 2. Publicamos usando el COMODÍN (**) para encontrar el proyecto donde sea que esté
-      - name: Publish .NET Core Project
-        run: dotnet publish **/*.Client.csproj -c Release -o release --nologo
+      # --- INICIO DEL BLOQUE DE DIAGNÓSTICO Y PUBLICACIÓN ---
+      
+      # 1. Este paso nos mostrará TODOS los archivos en el log.
+      # Si falla, ve a los logs de GitHub Actions y busca este paso para ver la ruta real.
+      - name: Listar archivos (Debug)
+        run: find . -maxdepth 4 -not -path '*/.*'
+
+      # 2. Este script busca el archivo .csproj automáticamente y lo compila
+      - name: Find and Publish Project
+        run: |
+          echo "Buscando archivo .Client.csproj..."
+          
+          # Buscamos cualquier archivo que termine en .Client.csproj
+          PROJECT_FILE=$(find . -name "*Client.csproj" -type f | head -n 1)
+
+          if [ -z "$PROJECT_FILE" ]; then
+            echo "❌ ERROR FATAL: No se encontró ningún archivo que termine en .Client.csproj"
+            exit 1
+          else
+            echo "✅ Archivo encontrado: $PROJECT_FILE"
+            
+            # Ejecutamos el comando usando la ruta exacta que encontramos
+            dotnet publish "$PROJECT_FILE" -c Release -o release --nologo
+          fi
+      # --- FIN DEL BLOQUE ---
 
       # 3. Ajustamos la URL base para GitHub Pages
       # IMPORTANTE: Cambia 'ReportAnalizerWASM' por el nombre EXACTO de tu repositorio si es diferente
