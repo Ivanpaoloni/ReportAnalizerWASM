@@ -3,7 +3,8 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [ master ] # O 'master', según tu rama principal
-
+  workflow_dispatch:
+  
 jobs:
   deploy-to-github-pages:
     runs-on: ubuntu-latest
