@@ -11,60 +11,73 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # 1. Configurar .NET
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '8.0.x'
 
-      # 2. Publicar (Usamos el buscador automático de proyecto)
-      - name: Find and Publish Project
+      # PASO 1: DIAGNÓSTICO DE PROYECTOS
+      # Listamos todos los archivos .csproj para ver cómo se llaman realmente
+      - name: Listar Proyectos Disponibles
         run: |
-          # Buscamos el archivo del proyecto Cliente
-          PROJECT_FILE=$(find . -name "*Client.csproj" -type f | head -n 1)
-          echo "✅ Proyecto encontrado: $PROJECT_FILE"
+          echo "🔍 Buscando archivos .csproj en todo el repositorio:"
+          find . -name "*.csproj"
+
+      # PASO 2: PUBLICAR ESPECÍFICAMENTE EL CLIENTE
+      # Forzamos la búsqueda de algo que termine en 'Client.csproj'
+      - name: Publish Client Project
+        run: |
+          # Buscamos el archivo
+          CLIENT_PROJECT=$(find . -name "*Client.csproj" -type f | head -n 1)
+          
+          if [ -z "$CLIENT_PROJECT" ]; then
+            echo "❌ ERROR FATAL: No encontré ningún archivo que termine en 'Client.csproj'"
+            exit 1
+          fi
+          
+          echo "✅ Compilando proyecto: $CLIENT_PROJECT"
           
           # Publicamos en la carpeta 'release'
-          dotnet publish "$PROJECT_FILE" -c Release -o release --nologo
+          dotnet publish "$CLIENT_PROJECT" -c Release -o release --nologo
 
-      # 3. DIAGNÓSTICO: Ver qué se creó (Esto nos dirá la verdad si falla)
-      - name: Listar archivos publicados (Debug)
-        run: ls -R release
-
-      # 4. Ajustar URL base (Versión Inteligente)
-      - name: Change base-tag in index.html
+      # PASO 3: DIAGNÓSTICO DE SALIDA (CRUCIAL)
+      # Esto nos mostrará qué rayos se generó en la carpeta release
+      - name: Ver contenido de carpeta release
         run: |
-          # Buscamos dónde está index.html dentro de la carpeta release
-          INDEX_FILE=$(find release -name index.html -type f | head -n 1)
-          
-          if [ -z "$INDEX_FILE" ]; then
-            echo "❌ ERROR: No se encontró index.html en la carpeta release."
+          echo "📂 Contenido de la carpeta 'release':"
+          ls -R release
+
+      # PASO 4: ENCONTRAR INDEX.HTML Y CORREGIRLO
+      # Buscamos el archivo donde sea que haya caído
+      - name: Fix base-tag and copy 404
+        run: |
+          # Buscamos index.html dentro de release (recursivo)
+          INDEX_PATH=$(find release -name index.html -type f | head -n 1)
+
+          if [ -z "$INDEX_PATH" ]; then
+            echo "❌ ERROR: Sigue sin aparecer index.html. Revisa el paso 'Ver contenido de carpeta release' en los logs."
             exit 1
           fi
 
-          echo "✅ index.html encontrado en: $INDEX_FILE"
+          echo "✅ Encontré el index en: $INDEX_PATH"
           
-          # Aplicamos el cambio de ruta (Reemplaza 'ReportAnalizerWASM' por tu nombre de repo si es distinto)
-          sed -i 's/<base href="\/" \/>/<base href="\/ReportAnalizerWASM\/" \/>/g' "$INDEX_FILE"
+          # Obtenemos la carpeta donde vive el index (usualmente release/wwwroot)
+          WWWROOT_DIR=$(dirname "$INDEX_PATH")
+          
+          # 1. Cambiar base tag (Reemplaza ReportAnalizerWASM por tu repo si es diferente)
+          sed -i 's/<base href="\/" \/>/<base href="\/ReportAnalizerWASM\/" \/>/g' "$INDEX_PATH"
+          
+          # 2. Crear copia 404
+          cp "$INDEX_PATH" "$WWWROOT_DIR/404.html"
+          
+          # 3. Crear .nojekyll
+          touch "$WWWROOT_DIR/.nojekyll"
+          
+          # Guardamos la ruta para el siguiente paso
+          echo "DEPLOY_FOLDER=$WWWROOT_DIR" >> $GITHUB_ENV
 
-      # 5. Copiar index a 404 (Usando la ruta encontrada)
-      - name: Copy index.html to 404.html
-        run: |
-          INDEX_FILE=$(find release -name index.html -type f | head -n 1)
-          DIR_PATH=$(dirname "$INDEX_FILE")
-          cp "$INDEX_FILE" "$DIR_PATH/404.html"
-
-      # 6. Crear .nojekyll (Usando la ruta encontrada)
-      - name: Add .nojekyll file
-        run: |
-          INDEX_FILE=$(find release -name index.html -type f | head -n 1)
-          DIR_PATH=$(dirname "$INDEX_FILE")
-          touch "$DIR_PATH/.nojekyll"
-
-      # 7. Subir a GitHub Pages
-      # IMPORTANTE: Aquí le decimos que suba la carpeta donde encontró el index.html
-      - name: Commit to GitHub Pages
+      # PASO 5: SUBIR A GITHUB
+      - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          branch: gh-pages
-          folder: release/wwwroot # Si en el paso 3 ves que no es wwwroot, cambia esto.
+          folder: ${{ env.DEPLOY_FOLDER }} # Usamos la carpeta que detectamos automáticamente
