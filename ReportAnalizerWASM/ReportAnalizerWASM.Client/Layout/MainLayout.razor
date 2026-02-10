@@ -11,14 +11,26 @@
         </div>
 
         <article class="content px-4">
-            <MudThemeProvider />
-            <MudDialogProvider />
+            <MudThemeProvider @bind-IsDarkMode="@_isDarkMode" Theme="_theme" />
+            <MudPopoverProvider /> <MudDialogProvider />
             <MudSnackbarProvider />
-            <MudPopoverProvider />
 
             <MudLayout>
+                <MudAppBar Elevation="1">
+                    <MudText Typo="Typo.h5" Class="ml-3">MP Analyzer</MudText>
+                    <MudSpacer />
+
+                    <MudTooltip Text="@(_isDarkMode ? "Cambiar a Modo Claro" : "Cambiar a Modo Oscuro")">
+                        <MudIconButton Icon="@(_isDarkMode? Icons.Material.Filled.Brightness7 : Icons.Material.Filled.Brightness4)"
+                                       Color="Color.Inherit"
+                                       OnClick="@((e) => _isDarkMode = !_isDarkMode)" />
+                    </MudTooltip>
+                </MudAppBar>
+
                 <MudMainContent>
-                    @Body
+                    <MudContainer MaxWidth="MaxWidth.Large" Class="my-4 pt-4">
+                        @Body
+                    </MudContainer>
                 </MudMainContent>
             </MudLayout>
         </article>
@@ -30,3 +42,8 @@
     <a href="" class="reload">Reload</a>
     <a class="dismiss">🗙</a>
 </div>
+
+@code {
+    private bool _isDarkMode = false;
+    private MudTheme _theme = new MudTheme();
+}

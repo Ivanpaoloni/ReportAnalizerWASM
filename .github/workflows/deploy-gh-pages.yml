@@ -1,0 +1,42 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ main ] # O 'master', según tu rama principal
+
+jobs:
+  deploy-to-github-pages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      # Configuramos .NET 8
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      # Publicamos SOLO el proyecto Cliente (WASM)
+      # OJO: Cambia 'ReportAnalizerWASM.Client' por el nombre real de tu carpeta del proyecto Cliente
+      - name: Publish .NET Core Project
+        run: dotnet publish ReportAnalizerWASM.Client/ReportAnalizerWASM.Client.csproj -c Release -o release --nologo
+
+      # Cambiamos la base-tag del HTML para que funcione en GitHub Pages
+      # Esto es necesario porque tu URL será tunombre.github.io/tu-repo
+      - name: Change base-tag in index.html from / to Project Name
+        run: sed -i 's/<base href="\/" \/>/<base href="\/ReportAnalizerWASM\/" \/>/g' release/wwwroot/index.html
+        # NOTA: Cambia 'ReportAnalizerWASM' en la línea de arriba por el nombre exacto de tu REPOSITORIO
+
+      # Copiamos el index.html a 404.html para que el enrutado de Blazor funcione al recargar
+      - name: Copy index.html to 404.html
+        run: cp release/wwwroot/index.html release/wwwroot/404.html
+
+      # Añadimos archivo .nojekyll para que GitHub no ignore los archivos que empiezan con _
+      - name: Add .nojekyll file
+        run: touch release/wwwroot/.nojekyll
+
+      # Desplegamos a la rama gh-pages
+      - name: Commit wwwroot to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: release/wwwroot

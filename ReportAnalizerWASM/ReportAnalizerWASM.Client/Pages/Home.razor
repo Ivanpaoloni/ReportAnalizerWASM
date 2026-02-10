@@ -85,6 +85,43 @@
                     Se procesaron @ventasEncontradas movimientos de liberación de dinero.
                 </MudAlert>
             </MudItem>
+            <MudItem xs="12">
+                <MudPaper Class="pa-4" Elevation="3">
+                    <MudText Typo="Typo.h6" Class="mb-4">Detalle de Transacciones</MudText>
+
+                    <MudDataGrid Items="@listaTransacciones"
+                                 Filterable="true"
+                                 SortMode="SortMode.Multiple"
+                                 Groupable="false">
+                        <Columns>
+                            <PropertyColumn Property="x => x.DATE" Title="Fecha" Sortable="true" />
+                            <PropertyColumn Property="x => x.DESCRIPTION" Title="Descripción" />
+
+                            <PropertyColumn Property="x => x.GROSS_AMOUNT" Title="Bruto" Format="C2" />
+
+                            <TemplateColumn Title="Comisión MP">
+                                <CellTemplate>
+                                    <MudText Color="Color.Error">
+                                        @context.Item.MP_FEE_AMOUNT.ToString("C2")
+                                    </MudText>
+                                </CellTemplate>
+                            </TemplateColumn>
+
+                            <TemplateColumn Title="Neto Calculado">
+                                <CellTemplate>
+                                    <MudText Color="Color.Success" Style="font-weight:bold;">
+                                        @((context.Item.GROSS_AMOUNT + context.Item.MP_FEE_AMOUNT + context.Item.TAXES_AMOUNT).ToString("C2"))
+                                    </MudText>
+                                </CellTemplate>
+                            </TemplateColumn>
+                        </Columns>
+
+                        <PagerContent>
+                            <MudDataGridPager T="TransaccionMP" />
+                        </PagerContent>
+                    </MudDataGrid>
+                </MudPaper>
+            </MudItem>
         </MudGrid>
     }
 </MudContainer>
@@ -98,6 +135,7 @@
     private string[] graficoDonutLabels = { "Neto", "Comisiones", "Impuestos" };
     private List<ChartSeries> seriesBarras = new List<ChartSeries>();
     private string[] labelsDias;
+    private List<TransaccionMP> listaTransacciones = new List<TransaccionMP>();
 
     private async Task ProcesarArchivo(InputFileChangeEventArgs e)
     {
@@ -137,12 +175,17 @@
                 .Where(x => !string.IsNullOrEmpty(x.DESCRIPTION) && x.DESCRIPTION.Contains("payment"))
                 .ToList();
 
+            listaTransacciones = registros
+                .Where(x => !string.IsNullOrEmpty(x.DESCRIPTION) && x.DESCRIPTION.Contains("payment"))
+                .ToList();
+
             foreach (var item in ventas)
             {
                 ventasEncontradas++;
                 nuevoResumen.VentasTotales += item.GROSS_AMOUNT;
                 nuevoResumen.ComisionesTotales += Math.Abs(item.MP_FEE_AMOUNT);
                 nuevoResumen.ImpuestosTotales += Math.Abs(item.TAXES_AMOUNT);
+                // Dentro del foreach o usando LINQ
             }
 
             resumen = nuevoResumen;
