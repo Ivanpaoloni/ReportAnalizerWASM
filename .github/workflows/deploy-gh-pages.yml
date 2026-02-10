@@ -2,8 +2,8 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ master, main ] # Activamos para ambas ramas por si acaso
-  workflow_dispatch:           # Botón manual para forzar el despliegue
+    branches: [ master, main ]
+  workflow_dispatch:
 
 jobs:
   deploy-to-github-pages:
@@ -11,55 +11,60 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # 1. Configuramos .NET 8
+      # 1. Configurar .NET
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '8.0.x'
 
-      # 2. Publicamos usando el COMODÍN (**) para encontrar el proyecto donde sea que esté
-      # --- INICIO DEL BLOQUE DE DIAGNÓSTICO Y PUBLICACIÓN ---
-      
-      # 1. Este paso nos mostrará TODOS los archivos en el log.
-      # Si falla, ve a los logs de GitHub Actions y busca este paso para ver la ruta real.
-      - name: Listar archivos (Debug)
-        run: find . -maxdepth 4 -not -path '*/.*'
-
-      # 2. Este script busca el archivo .csproj automáticamente y lo compila
+      # 2. Publicar (Usamos el buscador automático de proyecto)
       - name: Find and Publish Project
         run: |
-          echo "Buscando archivo .Client.csproj..."
-          
-          # Buscamos cualquier archivo que termine en .Client.csproj
+          # Buscamos el archivo del proyecto Cliente
           PROJECT_FILE=$(find . -name "*Client.csproj" -type f | head -n 1)
+          echo "✅ Proyecto encontrado: $PROJECT_FILE"
+          
+          # Publicamos en la carpeta 'release'
+          dotnet publish "$PROJECT_FILE" -c Release -o release --nologo
 
-          if [ -z "$PROJECT_FILE" ]; then
-            echo "❌ ERROR FATAL: No se encontró ningún archivo que termine en .Client.csproj"
-            exit 1
-          else
-            echo "✅ Archivo encontrado: $PROJECT_FILE"
-            
-            # Ejecutamos el comando usando la ruta exacta que encontramos
-            dotnet publish "$PROJECT_FILE" -c Release -o release --nologo
-          fi
-      # --- FIN DEL BLOQUE ---
+      # 3. DIAGNÓSTICO: Ver qué se creó (Esto nos dirá la verdad si falla)
+      - name: Listar archivos publicados (Debug)
+        run: ls -R release
 
-      # 3. Ajustamos la URL base para GitHub Pages
-      # IMPORTANTE: Cambia 'ReportAnalizerWASM' por el nombre EXACTO de tu repositorio si es diferente
+      # 4. Ajustar URL base (Versión Inteligente)
       - name: Change base-tag in index.html
-        run: sed -i 's/<base href="\/" \/>/<base href="\/ReportAnalizerWASM\/" \/>/g' release/wwwroot/index.html
+        run: |
+          # Buscamos dónde está index.html dentro de la carpeta release
+          INDEX_FILE=$(find release -name index.html -type f | head -n 1)
+          
+          if [ -z "$INDEX_FILE" ]; then
+            echo "❌ ERROR: No se encontró index.html en la carpeta release."
+            exit 1
+          fi
 
-      # 4. Copiamos index a 404 para que el refrescar página funcione
+          echo "✅ index.html encontrado en: $INDEX_FILE"
+          
+          # Aplicamos el cambio de ruta (Reemplaza 'ReportAnalizerWASM' por tu nombre de repo si es distinto)
+          sed -i 's/<base href="\/" \/>/<base href="\/ReportAnalizerWASM\/" \/>/g' "$INDEX_FILE"
+
+      # 5. Copiar index a 404 (Usando la ruta encontrada)
       - name: Copy index.html to 404.html
-        run: cp release/wwwroot/index.html release/wwwroot/404.html
+        run: |
+          INDEX_FILE=$(find release -name index.html -type f | head -n 1)
+          DIR_PATH=$(dirname "$INDEX_FILE")
+          cp "$INDEX_FILE" "$DIR_PATH/404.html"
 
-      # 5. Añadimos .nojekyll
+      # 6. Crear .nojekyll (Usando la ruta encontrada)
       - name: Add .nojekyll file
-        run: touch release/wwwroot/.nojekyll
+        run: |
+          INDEX_FILE=$(find release -name index.html -type f | head -n 1)
+          DIR_PATH=$(dirname "$INDEX_FILE")
+          touch "$DIR_PATH/.nojekyll"
 
-      # 6. Subimos a la rama gh-pages
-      - name: Commit wwwroot to GitHub Pages
+      # 7. Subir a GitHub Pages
+      # IMPORTANTE: Aquí le decimos que suba la carpeta donde encontró el index.html
+      - name: Commit to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          branch: gh-pages # Forzamos el nombre de la rama destino
-          folder: release/wwwroot
+          branch: gh-pages
+          folder: release/wwwroot # Si en el paso 3 ves que no es wwwroot, cambia esto.
