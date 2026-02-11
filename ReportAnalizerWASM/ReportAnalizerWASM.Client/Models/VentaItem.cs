@@ -5,21 +5,20 @@ namespace ReportAnalizerWASM.Client.Models
 {
     public class VentaItem
     {
-        // Propiedades mapeadas desde el Excel
         public string IdOperacion { get; set; }
         public string FechaRaw { get; set; }
-        public string IngresoBrutoRaw { get; set; } // Columna "Cobro"
-        public string CostosRaw { get; set; }       // Columna "Cargos e impuestos" (El total negativo)
-        public string NetoRaw { get; set; }         // Columna "Total a recibir"
-        public string DesgloseFiscal { get; set; }  // Columna "Resumen" (El detalle texto)
+        public string IngresoBrutoRaw { get; set; }
+        public string CostosRaw { get; set; }
+        public string NetoRaw { get; set; }
+        public string DesgloseFiscal { get; set; }
         public string Producto { get; set; }
         public int Cantidad { get; set; }
-
+        public DateTime Fecha { get; set; }
         // --- VALORES NUMÉRICOS CALCULADOS ---
 
         public decimal MontoBruto => LimpiarDinero(IngresoBrutoRaw);
         public decimal MontoNeto => LimpiarDinero(NetoRaw);
-        public decimal MontoCostosTotal => LimpiarDinero(CostosRaw); // Siempre es negativo o cero
+        public decimal MontoCostosTotal => LimpiarDinero(CostosRaw);
 
         // --- DESGLOSE DE DEDUCCIONES ---
 

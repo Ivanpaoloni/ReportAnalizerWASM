@@ -1,34 +1,37 @@
 ﻿@page "/"
-@using System.IO
-@using System.Data
-@using ExcelDataReader
 @using ReportAnalizerWASM.Client.Models
-@using System.Globalization
 
-<PageTitle>MP Analyzer - Auditoría Total</PageTitle>
+<PageTitle>MP Analyzer - Evolución</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
-    <MudText Typo="Typo.h4" Color="Color.Primary" GutterBottom="true">Auditoría Financiera</MudText>
-    <MudText Typo="Typo.body1" Class="mb-4">Sube tu Excel de Ventas para ver el desglose real de comisiones e impuestos.</MudText>
-
+    <MudText Typo="Typo.h4" Color="Color.Primary" GutterBottom="true">Tablero de Control</MudText>
+    
     <MudPaper Class="pa-4 mb-4" Elevation="3">
-        <MudStack Row="true" AlignItems="AlignItems.Center">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
             <MudFileUpload T="IBrowserFile" Accept=".xlsx" FilesChanged="CargarExcel">
                 <ActivatorContent>
-                    <MudButton Variant="Variant.Filled"
-                               Color="Color.Success"
-                               StartIcon="@Icons.Material.Filled.TableView">
-                        Cargar Excel Ventas (.xlsx)
+                    <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.TableView">
+                        Cargar Excel Ventas
                     </MudButton>
                 </ActivatorContent>
             </MudFileUpload>
 
-            @if (_cargando)
+            @if (_ventasTodas.Any())
             {
-                <MudProgressCircular Color="Color.Success" Indeterminate="true" Size="Size.Small" />
-                <MudText>Analizando deducciones...</MudText>
+                <MudDateRangePicker Label="Filtrar Período"
+                                    DateRange="_rangoFechas"
+                                    DateRangeChanged="OnRangoCambiado"
+                                    Placeholder="Selecciona rango"
+                                    Color="Color.Primary"
+                                    Class="w-25" />
             }
         </MudStack>
+        
+        @if (_cargando)
+        {
+            <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mt-2" />
+            <MudText Typo="Typo.caption">Procesando fechas e inteligencia temporal...</MudText>
+        }
     </MudPaper>
 
     @if (_error != null)
@@ -36,236 +39,62 @@
         <MudAlert Severity="Severity.Error" Class="mb-4">@_error</MudAlert>
     }
 
-    @if (_ventas.Any())
+    @if (_ventasFiltradas.Any())
     {
-        <div id="totales">
+        <MudPaper Class="pa-4 mb-4">
+            <MudText Typo="Typo.h6">Evolución de Ventas (Diaria)</MudText>
+                <MudChart ChartType="ChartType.Line"
+                          XAxisLabels="@_labelsEvolucion"
+                          ChartSeries="@_seriesEvolucion"
+                          Width="100%" Height="350px" />
+        </MudPaper>
+
         <MudGrid Class="mb-4">
-            <MudItem xs="12" sm="2">
-                <MudPaper Class="pa-3 mud-theme-primary">
-                    <MudText Typo="Typo.caption">Ventas Brutas</MudText>
-                    <MudText Typo="Typo.h6">@_totalBruto.ToString("C0", _cultureArg)</MudText>
-                </MudPaper>
-            </MudItem>
-
-            <MudItem xs="12" sm="2">
-                <MudPaper Class="pa-3" Style="background-color:#424242; color:white;">
-                    <MudText Typo="Typo.caption">Comisión MP</MudText>
-                    <MudText Typo="Typo.h6">@_totalComisiones.ToString("C0", _cultureArg)</MudText>
-                    <MudText Typo="Typo.caption" Style="opacity:0.7">Servicio de cobro</MudText>
-                </MudPaper>
-            </MudItem>
-
             <MudItem xs="12" sm="3">
-                <MudPaper Class="pa-3" Style="background-color:#d32f2f; color:white;">
-                    <MudText Typo="Typo.caption">Impuestos y Retenciones</MudText>
-                    <MudText Typo="Typo.h6">@_totalImpuestos.ToString("C0", _cultureArg)</MudText>
-                    <MudText Typo="Typo.caption" Style="opacity:0.7">IIBB, IVA, Ganancias</MudText>
+                <MudPaper Class="pa-4 mud-theme-primary">
+                    <MudText>Ventas Brutas</MudText>
+                    <MudText Typo="Typo.h5">@_ventasFiltradas.Sum(x => x.MontoBruto).ToString("C0", _cultureArg)</MudText>
                 </MudPaper>
             </MudItem>
-
-            @if (_totalEnvios != 0)
-            {
-                <MudItem xs="12" sm="2">
-                    <MudPaper Class="pa-3" Style="background-color:#f57c00; color:white;">
-                        <MudText Typo="Typo.caption">Costo Envíos</MudText>
-                        <MudText Typo="Typo.h6">@_totalEnvios.ToString("C0", _cultureArg)</MudText>
-                    </MudPaper>
-                </MudItem>
-            }
-
             <MudItem xs="12" sm="3">
-                <MudPaper Class="pa-3 mud-theme-success">
-                    <MudText Typo="Typo.caption">Neto en Mano</MudText>
-                    <MudText Typo="Typo.h5" Style="font-weight:bold;">@_totalNeto.ToString("C0", _cultureArg)</MudText>
+                <MudPaper Class="pa-4" Style="background-color:#d32f2f; color:white;">
+                    <MudText>Retenciones (Fuga)</MudText>
+                    <MudText Typo="Typo.h5">@_ventasFiltradas.Sum(x => x.MontoImpuestos).ToString("C0", _cultureArg)</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="3">
+                <MudPaper Class="pa-4 mud-theme-success">
+                    <MudText>Ganancia Neta</MudText>
+                    <MudText Typo="Typo.h5">@_ventasFiltradas.Sum(x => x.MontoNeto).ToString("C0", _cultureArg)</MudText>
+                </MudPaper>
+            </MudItem>
+             <MudItem xs="12" sm="3">
+                <MudPaper Class="pa-4">
+                    <MudText>Ticket Promedio</MudText>
+                    <MudText Typo="Typo.h5">@((_ventasFiltradas.Sum(x => x.MontoBruto) / _ventasFiltradas.Count).ToString("C0", _cultureArg))</MudText>
                 </MudPaper>
             </MudItem>
         </MudGrid>
-        </div>
 
-        <div id="graficos">
-        <MudGrid>
-            <MudItem xs="12" md="6">
-                <MudPaper Class="pa-4">
-                    <MudText Typo="Typo.h6" GutterBottom="true">Distribución de Costos</MudText>
-                    <MudChart ChartType="ChartType.Pie"
-                              InputData="@_datosChartCostos"
-                              InputLabels="@_labelsChartCostos"
-                              Width="100%" Height="300px" />
-                </MudPaper>
-            </MudItem>
-            <MudItem xs="12" md="6">
-                <MudPaper Class="pa-4">
-                    <MudText Typo="Typo.h6" GutterBottom="true">Rentabilidad</MudText>
-                    <MudText>Margen Neto: @((_totalNeto / (_totalBruto == 0 ? 1 : _totalBruto)).ToString("P1", _cultureArg))</MudText>
-                    <MudProgressLinear Color="Color.Success" Striped="true" Size="Size.Large" Value="@((double)(_totalNeto / (_totalBruto == 0 ? 1 : _totalBruto)) * 100)" Class="my-4" />
-                    <MudText Typo="Typo.body2">De cada $1.000 vendidos, te quedan <b>@((_totalNeto / (_totalBruto == 0 ? 1 : _totalBruto) * 1000).ToString("C0", _cultureArg))</b></MudText>
-                </MudPaper>
-            </MudItem>
-        </MudGrid>
-        </div>
-
-        <div id="grillas">
-        <MudDataGrid Items="@_ventas" Filterable="true" SortMode="SortMode.Multiple" Class="mt-4" Elevation="2">
+        <MudDataGrid Items="@_ventasFiltradas" Filterable="true" SortMode="SortMode.Multiple" Elevation="2">
             <Columns>
-                <PropertyColumn Property="x => x.FechaRaw" Title="Fecha" />
+                <PropertyColumn Property="x => x.Fecha" Title="Fecha" Format="dd/MM/yyyy HH:mm" />
                 <PropertyColumn Property="x => x.Producto" Title="Producto" />
-
                 <PropertyColumn Property="x => x.MontoBruto" Title="Bruto" Format="C0" Culture="@_cultureArg" />
-
-                <PropertyColumn Property="x => x.MontoComisionMP" Title="Comisión MP" Format="C0" Culture="@_cultureArg">
-                    <CellTemplate>
-                        <span style="color: #616161;">@context.Item.MontoComisionMP.ToString("C2", _cultureArg)</span>
-                    </CellTemplate>
-                </PropertyColumn>
-
                 <PropertyColumn Property="x => x.MontoImpuestos" Title="Impuestos" Format="C0" Culture="@_cultureArg">
                     <CellTemplate>
                         @if (context.Item.MontoImpuestos < 0)
                         {
                             <span style="color: #d32f2f; font-weight:bold;">@context.Item.MontoImpuestos.ToString("C2", _cultureArg)</span>
                         }
-                        else
-                        {
-                            <span>-</span>
-                        }
+                        else { <span>-</span> }
                     </CellTemplate>
                 </PropertyColumn>
-
                 <PropertyColumn Property="x => x.MontoNeto" Title="Neto" Format="C0" Culture="@_cultureArg" CellStyle="font-weight:bold;" />
             </Columns>
             <PagerContent>
                 <MudDataGridPager T="VentaItem" />
             </PagerContent>
         </MudDataGrid>
-        </div>
     }
 </MudContainer>
-
-@code {
-    private List<VentaItem> _ventas = new();
-    private bool _cargando = false;
-    private string _error;
-
-    // Totales para tarjetas
-    private decimal _totalBruto = 0;
-    private decimal _totalNeto = 0;
-    private decimal _totalComisiones = 0;
-    private decimal _totalImpuestos = 0;
-    private decimal _totalEnvios = 0;
-
-    // Gráficos
-    private double[] _datosChartCostos = { };
-    private string[] _labelsChartCostos = { };
-
-    // Cultura Argentina corregida (para que salga $)
-    private CultureInfo _cultureArg;
-
-    protected override void OnInitialized()
-    {
-        // Forzamos el símbolo $ porque a veces es-AR viene roto en WASM
-        _cultureArg = (CultureInfo)CultureInfo.GetCultureInfo("es-AR").Clone();
-        _cultureArg.NumberFormat.CurrencySymbol = "$";
-    }
-
-    private async Task CargarExcel(IBrowserFile archivo)
-    {
-        _cargando = true;
-        _error = null;
-        _ventas.Clear();
-
-        try
-        {
-            using var stream = archivo.OpenReadStream(maxAllowedSize: 20 * 1024 * 1024);
-            using var ms = new MemoryStream();
-            await stream.CopyToAsync(ms);
-            ms.Position = 0;
-
-            using var reader = ExcelReaderFactory.CreateReader(ms);
-
-            bool cabeceraEncontrada = false;
-            // Índices de columnas
-            int cOperacion = -1, cFecha = -1, cCobro = -1, cResumen = -1, cImpuestos = -1, cNeto = -1, cProd = -1, cCant = -1;
-
-            while (reader.Read())
-            {
-                if (!cabeceraEncontrada)
-                {
-                    // Buscamos dinámicamente dónde están los títulos
-                    for (int i = 0; i < reader.FieldCount; i++)
-                    {
-                        var valor = reader.GetValue(i)?.ToString() ?? "";
-                        if (valor == "Número de operación") cOperacion = i;
-                        if (valor == "Fecha de la compra") cFecha = i;
-                        if (valor == "Cobro") cCobro = i;
-                        if (valor == "Resumen") cResumen = i;
-                        if (valor == "Cargos e impuestos") cImpuestos = i;
-                        if (valor == "Total a recibir") cNeto = i;
-                        if (valor == "Descripción del ítem") cProd = i;
-                        if (valor == "Cantidad") cCant = i;
-                    }
-                    if (cOperacion != -1 && cCobro != -1) cabeceraEncontrada = true;
-                }
-                else
-                {
-                    // Lectura de datos
-                    try
-                    {
-                        var item = new VentaItem();
-                        if (cOperacion != -1) item.IdOperacion = reader.GetValue(cOperacion)?.ToString();
-
-                        // Solo procesamos filas que tengan ID de operación (evitamos totales al final del excel)
-                        if (!string.IsNullOrEmpty(item.IdOperacion))
-                        {
-                            if (cFecha != -1) item.FechaRaw = reader.GetValue(cFecha)?.ToString();
-                            if (cCobro != -1) item.IngresoBrutoRaw = reader.GetValue(cCobro)?.ToString();
-                            if (cImpuestos != -1) item.CostosRaw = reader.GetValue(cImpuestos)?.ToString();
-                            if (cNeto != -1) item.NetoRaw = reader.GetValue(cNeto)?.ToString();
-                            if (cResumen != -1) item.DesgloseFiscal = reader.GetValue(cResumen)?.ToString();
-                            if (cProd != -1) item.Producto = reader.GetValue(cProd)?.ToString();
-
-                            if (cCant != -1)
-                            {
-                                var sCant = reader.GetValue(cCant)?.ToString();
-                                if (int.TryParse(sCant, out int c)) item.Cantidad = c;
-                            }
-
-                            _ventas.Add(item);
-                        }
-                    }
-                    catch { /* Ignorar errores de fila */ }
-                }
-            }
-
-            if (!cabeceraEncontrada) _error = "No se encontraron las columnas esperadas en el Excel.";
-            else CalcularTotales();
-        }
-        catch (Exception ex)
-        {
-            _error = $"Error al leer el archivo: {ex.Message}";
-        }
-        finally
-        {
-            _cargando = false;
-        }
-    }
-
-    private void CalcularTotales()
-    {
-        _totalBruto = _ventas.Sum(x => x.MontoBruto);
-        _totalNeto = _ventas.Sum(x => x.MontoNeto);
-        _totalImpuestos = _ventas.Sum(x => x.MontoImpuestos);
-        _totalComisiones = _ventas.Sum(x => x.MontoComisionMP);
-        _totalEnvios = _ventas.Sum(x => x.MontoEnvio);
-
-        // Preparamos datos para el gráfico de torta (Valores positivos para que el chart no falle)
-        var listaDatos = new List<double>();
-        var listaLabels = new List<string>();
-
-        if (_totalComisiones != 0) { listaDatos.Add((double)Math.Abs(_totalComisiones)); listaLabels.Add("Comisión MP"); }
-        if (_totalImpuestos != 0) { listaDatos.Add((double)Math.Abs(_totalImpuestos)); listaLabels.Add("Impuestos"); }
-        if (_totalEnvios != 0) { listaDatos.Add((double)Math.Abs(_totalEnvios)); listaLabels.Add("Envíos"); }
-
-        _datosChartCostos = listaDatos.ToArray();
-        _labelsChartCostos = listaLabels.ToArray();
-    }
-}
