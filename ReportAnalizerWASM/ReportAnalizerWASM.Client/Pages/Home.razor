@@ -50,30 +50,35 @@
         </MudPaper>
 
         <MudGrid Class="mb-4">
+
             <MudItem xs="12" sm="3">
                 <MudPaper Class="pa-4 mud-theme-primary">
                     <MudText>Ventas Brutas</MudText>
                     <MudText Typo="Typo.h5">@_ventasFiltradas.Sum(x => x.MontoBruto).ToString("C0", _cultureArg)</MudText>
                 </MudPaper>
             </MudItem>
+
             <MudItem xs="12" sm="3">
                 <MudPaper Class="pa-4" Style="background-color:#d32f2f; color:white;">
-                    <MudText>Retenciones (Fuga)</MudText>
+                    <MudText>Comisiones MP</MudText>
+                    <MudText Typo="Typo.h5">@_ventasFiltradas.Sum(x => x.MontoComisionMP).ToString("C0", _cultureArg)</MudText>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" sm="3">
+                <MudPaper Class="pa-4" Style="background-color:#d32f2f; color:white;">
+                    <MudText>Retenciones (IVA & IIBB)</MudText>
                     <MudText Typo="Typo.h5">@_ventasFiltradas.Sum(x => x.MontoImpuestos).ToString("C0", _cultureArg)</MudText>
                 </MudPaper>
             </MudItem>
+
             <MudItem xs="12" sm="3">
                 <MudPaper Class="pa-4 mud-theme-success">
                     <MudText>Ganancia Neta</MudText>
                     <MudText Typo="Typo.h5">@_ventasFiltradas.Sum(x => x.MontoNeto).ToString("C0", _cultureArg)</MudText>
                 </MudPaper>
             </MudItem>
-             <MudItem xs="12" sm="3">
-                <MudPaper Class="pa-4">
-                    <MudText>Ticket Promedio</MudText>
-                    <MudText Typo="Typo.h5">@((_ventasFiltradas.Sum(x => x.MontoBruto) / _ventasFiltradas.Count).ToString("C0", _cultureArg))</MudText>
-                </MudPaper>
-            </MudItem>
+
         </MudGrid>
 
         <MudDataGrid Items="@_ventasFiltradas" Filterable="true" SortMode="SortMode.Multiple" Elevation="2">
@@ -81,6 +86,7 @@
                 <PropertyColumn Property="x => x.Fecha" Title="Fecha" Format="dd/MM/yyyy HH:mm" />
                 <PropertyColumn Property="x => x.Producto" Title="Producto" />
                 <PropertyColumn Property="x => x.MontoBruto" Title="Bruto" Format="C0" Culture="@_cultureArg" />
+                <PropertyColumn Property="x => x.MontoComisionMP" Title="Comisiones" Format="C0" Culture="@_cultureArg" CellStyle="color: #d32f2f; font-weight:bold;" />
                 <PropertyColumn Property="x => x.MontoImpuestos" Title="Impuestos" Format="C0" Culture="@_cultureArg">
                     <CellTemplate>
                         @if (context.Item.MontoImpuestos < 0)
