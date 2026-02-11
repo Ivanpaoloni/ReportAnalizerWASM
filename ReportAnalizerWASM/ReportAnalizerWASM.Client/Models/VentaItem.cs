@@ -14,7 +14,7 @@ namespace ReportAnalizerWASM.Client.Models
         public string DesgloseFiscal { get; set; }  // Columna "Resumen" (El detalle texto)
         public string Producto { get; set; }
         public int Cantidad { get; set; }
-
+        public DateTime Fecha { get; set; }
         // --- VALORES NUMÉRICOS CALCULADOS ---
 
         public decimal MontoBruto => LimpiarDinero(IngresoBrutoRaw);
