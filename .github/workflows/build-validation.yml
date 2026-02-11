@@ -1,0 +1,34 @@
+name: Validación de Build (PR)
+
+on:
+  pull_request:
+    branches: [ "main", "master" ] # Se ejecuta en cada PR hacia main
+  workflow_dispatch: # Permite ejecutarlo manualmente si quieres
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Bajar tu código al servidor de GitHub
+    - uses: actions/checkout@v4
+
+    # 2. Instalar .NET 8 (El entorno de compilación)
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    # 3. Restaurar librerías (Nuget packages)
+    - name: Restore dependencies
+      run: dotnet restore
+
+    # 4. Compilar el proyecto (Aquí es donde explota si hay errores)
+    # --no-restore: Para no perder tiempo restaurando de nuevo
+    # --configuration Release: Para simular un entorno real
+    - name: Build
+      run: dotnet build --no-restore --configuration Release
+      
+    # 5. (Opcional) Correr Tests si tuvieras
+    # - name: Test
+    #   run: dotnet test --no-build --verbosity normal
