@@ -64,13 +64,36 @@
 
     @if (_ventasFiltradas.Any())
     {
-        <MudPaper Class="pa-4 mb-4">
-            <MudText Typo="Typo.h6">Evolución de Ventas (Diaria)</MudText>
-                <MudChart ChartType="ChartType.Line"
-                          XAxisLabels="@_labelsEvolucion"
-                          ChartSeries="@_seriesEvolucion"
-                          Width="100%" Height="350px" />
-        </MudPaper>
+        <MudGrid Class="mb-4">
+
+            <MudItem xs="12" md="8">
+                <MudPaper Class="pa-4" Style="height: 100%;">
+                    <MudText Typo="Typo.h6">Evolución de Ventas</MudText>
+                    <MudChart ChartType="ChartType.Line"
+                              XAxisLabels="@_labelsEvolucion"
+                              ChartSeries="@_seriesEvolucion"
+                              Width="100%" Height="300px" />
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="4">
+                <MudPaper Class="pa-4" Style="height: 100%;">
+                    <MudText Typo="Typo.h6">Top Productos (Ganancia)</MudText>
+                    @if (_seriesProductos.Any())
+                    {
+                        <MudChart ChartType="ChartType.Donut"
+                                  InputData="@_seriesProductos"
+                                  InputLabels="@_labelsProductos"
+                                  Width="100%" Height="300px" />
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2" Color="Color.Surface" Class="mt-4 text-center">No hay datos de productos.</MudText>
+                    }
+                </MudPaper>
+            </MudItem>
+
+        </MudGrid>
 
         <MudGrid Class="mb-4">
 
