@@ -1,4 +1,5 @@
-﻿using ExcelDataReader;
+﻿using Blazored.LocalStorage;
+using ExcelDataReader;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;
@@ -15,7 +16,9 @@ namespace ReportAnalizerWASM.Client.Pages
     {
         [Inject] private IVentasService _ventasService { get; set; }
         [Inject] private IExportService _exportService { get; set; }
-        [Inject] private IJSRuntime _jsRuntime { get; set; } // Necesario para llamar al script
+        [Inject] private IJSRuntime _jsRuntime { get; set; }
+        [Inject] private ILocalStorageService _localStorage { get; set; }
+        private const string CLAVE_DATOS = "ventas_mp_cache"; // El nombre del "cajón" donde guardaremos
 
         private List<VentaItem> _ventasTodas = new();      // Todos los datos del archivo
         private List<VentaItem> _ventasFiltradas = new(); // Los datos que se ven en pantalla
@@ -31,11 +34,23 @@ namespace ReportAnalizerWASM.Client.Pages
         private List<ChartSeries> _seriesEvolucion = new();
         private string[] _labelsEvolucion = { };
 
-        protected override void OnInitialized()
+        protected override async Task OnInitializedAsync()
         {
-            // Configuración regional para moneda argentina
             _cultureArg = (CultureInfo)CultureInfo.GetCultureInfo("es-AR").Clone();
             _cultureArg.NumberFormat.CurrencySymbol = "$";
+
+            // Intentamos buscar si hay datos de una sesión anterior
+            var datosGuardados = await _localStorage.GetItemAsync<List<VentaItem>>(CLAVE_DATOS);
+            
+            if (datosGuardados != null && datosGuardados.Any())
+            {
+                _ventasTodas = datosGuardados;
+                var fechaMin = _ventasTodas.Min(x => x.Fecha.Date);
+                var fechaMax = _ventasTodas.Max(x => x.Fecha.Date);
+                _rangoFechas = new DateRange(fechaMin, fechaMax);
+                
+                FiltrarVentas();
+            }
         }
 
         private async Task CargarExcel(IBrowserFile archivo)
@@ -49,15 +64,12 @@ namespace ReportAnalizerWASM.Client.Pages
 
                 if (_ventasTodas.Any())
                 {
-                    // TRUCO: Buscamos el rango real de los datos cargados
                     var fechaMin = _ventasTodas.Min(x => x.Fecha.Date);
                     var fechaMax = _ventasTodas.Max(x => x.Fecha.Date);
-
-                    // Si todas son hoy (porque falló el parseo), damos un margen visual de 1 mes atrás
-                    if (fechaMin == fechaMax) fechaMin = fechaMin.AddMonths(-1);
-
-                    // Actualizamos el DatePicker para que COINCIDA con los datos
                     _rangoFechas = new DateRange(fechaMin, fechaMax);
+
+                    // 3. GUARDAMOS EN EL NAVEGADOR
+                    await _localStorage.SetItemAsync(CLAVE_DATOS, _ventasTodas);
                 }
 
                 FiltrarVentas();
@@ -69,10 +81,17 @@ namespace ReportAnalizerWASM.Client.Pages
             finally
             {
                 _cargando = false;
-                StateHasChanged(); // Forzamos refresco de pantalla
+                StateHasChanged();
             }
         }
-
+        private async Task LimpiarDatos()
+        {
+            await _localStorage.RemoveItemAsync(CLAVE_DATOS);
+            _ventasTodas.Clear();
+            _ventasFiltradas.Clear();
+            _seriesEvolucion.Clear();
+            StateHasChanged();
+        }
         // ESTE ES EL MÉTODO QUE FALTABA
         // Se llama cada vez que el usuario mueve el selector de fechas
         private void OnRangoCambiado(DateRange rango)
