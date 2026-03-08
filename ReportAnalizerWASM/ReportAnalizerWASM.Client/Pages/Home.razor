@@ -53,28 +53,28 @@
             <MudItem xs="12" sm="3">
                 <MudPaper Class="pa-4 mud-theme-primary">
                     <MudText>Ventas Brutas</MudText>
-                    <MudText Typo="Typo.h5">@_ventasFiltradas.Sum(x => x.MontoBruto).ToString("C0", _cultureArg)</MudText>
+                    <MudText Typo="Typo.h5">@_ventasFiltradas.Sum(x => x.MontoBruto).ToString("C")</MudText>
                 </MudPaper>
             </MudItem>
 
             <MudItem xs="12" sm="3">
                 <MudPaper Class="pa-4" Style="background-color:#d32f2f; color:white;">
                     <MudText>Comisiones MP</MudText>
-                    <MudText Typo="Typo.h5">@_ventasFiltradas.Sum(x => x.MontoComisionMP).ToString("C0", _cultureArg)</MudText>
+                    <MudText Typo="Typo.h5">@_ventasFiltradas.Sum(x => x.MontoComisionMP).ToString("C")</MudText>
                 </MudPaper>
             </MudItem>
 
             <MudItem xs="12" sm="3">
                 <MudPaper Class="pa-4" Style="background-color:#d32f2f; color:white;">
                     <MudText>Retenciones (IVA & IIBB)</MudText>
-                    <MudText Typo="Typo.h5">@_ventasFiltradas.Sum(x => x.MontoImpuestos).ToString("C0", _cultureArg)</MudText>
+                    <MudText Typo="Typo.h5">@_ventasFiltradas.Sum(x => x.MontoImpuestos).ToString("C")</MudText>
                 </MudPaper>
             </MudItem>
 
             <MudItem xs="12" sm="3">
                 <MudPaper Class="pa-4 mud-theme-success">
                     <MudText>Ganancia Neta</MudText>
-                    <MudText Typo="Typo.h5">@_ventasFiltradas.Sum(x => x.MontoNeto).ToString("C0", _cultureArg)</MudText>
+                    <MudText Typo="Typo.h5">@_ventasFiltradas.Sum(x => x.MontoNeto).ToString("C")</MudText>
                 </MudPaper>
             </MudItem>
         </MudGrid>
