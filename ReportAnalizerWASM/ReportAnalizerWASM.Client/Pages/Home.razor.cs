@@ -30,6 +30,10 @@ namespace ReportAnalizerWASM.Client.Pages
         private string _error;
         private CultureInfo _cultureArg;
 
+        // Gráfico de Productos (Dona)
+        private double[] _seriesProductos = { };
+        private string[] _labelsProductos = { };
+
         // Gráfico de Evolución
         private List<ChartSeries> _seriesEvolucion = new();
         private string[] _labelsEvolucion = { };
@@ -123,44 +127,43 @@ namespace ReportAnalizerWASM.Client.Pages
 
         private void ActualizarGraficos()
         {
-            // PROTECCIÓN: Si no hay datos filtrados, limpiamos el gráfico y salimos
-            if (_ventasFiltradas == null || !_ventasFiltradas.Any())
+            if (!_ventasFiltradas.Any())
             {
-                _seriesEvolucion = new List<ChartSeries>(); // Lista vacía
+                _seriesEvolucion.Clear();
                 _labelsEvolucion = Array.Empty<string>();
+                _seriesProductos = Array.Empty<double>();
+                _labelsProductos = Array.Empty<string>();
                 return;
             }
 
+            // GRÁFICO DE LÍNEA Evolución
             var ventasPorDia = _ventasFiltradas
                 .GroupBy(x => x.Fecha.Date)
                 .OrderBy(g => g.Key)
                 .Select(g => new { Fecha = g.Key, Total = (double)g.Sum(x => x.MontoBruto) })
                 .ToList();
 
-            // CHART SERIES
             _seriesEvolucion = new List<ChartSeries>()
             {
-                new ChartSeries()
-                {
-                    Name = "Ventas ($)",
-                    Data = ventasPorDia.Select(x => x.Total).ToArray()
-                }
+                new ChartSeries() { Name = "Ventas ($)", Data = ventasPorDia.Select(x => x.Total).ToArray() }
             };
 
-            // ETIQUETAS (LABELS)
             int totalPuntos = ventasPorDia.Count;
             int paso = totalPuntos <= 10 ? 1 : (int)Math.Ceiling(totalPuntos / 10.0);
+            _labelsEvolucion = ventasPorDia.Select((x, i) => (i % paso == 0 || i == totalPuntos - 1) ? x.Fecha.ToString("dd/MM") : "").ToArray();
 
-            _labelsEvolucion = ventasPorDia
-                .Select((x, index) =>
-                {
-                    if (index % paso == 0 || index == totalPuntos - 1)
-                        return x.Fecha.ToString("dd/MM");
-                    return "";
-                })
-                .ToArray();
+            // GRÁFICO DE DONA
+            // los 5 mejores
+            var topProductos = _ventasFiltradas
+                .GroupBy(x => string.IsNullOrWhiteSpace(x.Producto) ? "Varios" : x.Producto)
+                .Select(g => new { Nombre = g.Key, Total = (double)g.Sum(x => x.MontoNeto) })
+                .OrderByDescending(x => x.Total)
+                .Take(5)
+                .ToList();
+
+            _seriesProductos = topProductos.Select(x => x.Total).ToArray();
+            _labelsProductos = topProductos.Select(x => x.Nombre).ToArray();
         }
-
         private async Task DescargarReporteContable()
         {
             if (!_ventasFiltradas.Any()) return;
