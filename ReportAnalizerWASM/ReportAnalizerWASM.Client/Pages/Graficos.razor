@@ -1,0 +1,80 @@
+﻿@page "/graficos"
+@using ReportAnalizerWASM.Client.Services
+@using ReportAnalizerWASM.Client.Models
+@using MudBlazor
+@inject AppStateService AppState
+@implements IDisposable
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudText Typo="Typo.h5" Class="mb-4">Análisis Gráfico</MudText>
+
+    @if (!AppState.VentasFiltradas.Any())
+    {
+        <MudAlert Severity="Severity.Info">No hay datos para mostrar. Carga un archivo en el Dashboard.</MudAlert>
+    }
+    else
+    {
+        <MudGrid Class="mb-4">
+            <MudItem xs="12" md="8">
+                <MudPaper Class="pa-4" Style="height: 100%;">
+                    <MudText Typo="Typo.h6">Evolución de Ventas</MudText>
+                    <MudChart ChartType="ChartType.Line" XAxisLabels="@_labelsEvolucion" ChartSeries="@_seriesEvolucion" Width="100%" Height="300px" />
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="4">
+                <MudPaper Class="pa-4" Style="height: 100%;">
+                    <MudText Typo="Typo.h6">Top Productos (Ganancia)</MudText>
+                    @if (_seriesProductos.Any())
+                    {
+                        <MudChart ChartType="ChartType.Donut" InputData="@_seriesProductos" InputLabels="@_labelsProductos" Width="100%" Height="300px" />
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    }
+</MudContainer>
+
+@code {
+    private List<ChartSeries> _seriesEvolucion = new();
+    private string[] _labelsEvolucion = Array.Empty<string>();
+    private double[] _seriesProductos = Array.Empty<double>();
+    private string[] _labelsProductos = Array.Empty<string>();
+
+    protected override void OnInitialized()
+    {
+        AppState.OnChange += ActualizarGraficos;
+        ActualizarGraficos(); // Calcular al entrar a la página
+    }
+
+    public void Dispose()
+    {
+        AppState.OnChange -= ActualizarGraficos; // Limpiar memoria al salir
+    }
+
+    private void ActualizarGraficos()
+    {
+        var ventas = AppState.VentasFiltradas;
+        if (!ventas.Any()) return;
+
+        // 1. Lógica Gráfico de Línea
+        var ventasPorDia = ventas.GroupBy(x => x.Fecha.Date).OrderBy(g => g.Key)
+            .Select(g => new { Fecha = g.Key, Total = (double)g.Sum(x => x.MontoBruto) }).ToList();
+
+        _seriesEvolucion = new List<ChartSeries>() { new ChartSeries() { Name = "Ventas ($)", Data = ventasPorDia.Select(x => x.Total).ToArray() } };
+
+        int totalPuntos = ventasPorDia.Count;
+        int paso = totalPuntos <= 10 ? 1 : (int)Math.Ceiling(totalPuntos / 10.0);
+        _labelsEvolucion = ventasPorDia.Select((x, i) => (i % paso == 0 || i == totalPuntos - 1) ? x.Fecha.ToString("dd/MM") : "").ToArray();
+
+        // 2. Lógica Gráfico de Dona
+        var topProductos = ventas.GroupBy(x => string.IsNullOrWhiteSpace(x.Producto) ? "Varios" : x.Producto)
+            .Select(g => new { Nombre = g.Key, Total = (double)g.Sum(x => x.MontoNeto) })
+            .OrderByDescending(x => x.Total).Take(5).ToList();
+
+        _seriesProductos = topProductos.Select(x => x.Total).ToArray();
+        _labelsProductos = topProductos.Select(x => x.Nombre).ToArray();
+
+        StateHasChanged();
+    }
+}
