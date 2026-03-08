@@ -1,6 +1,7 @@
 ﻿using ExcelDataReader;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.JSInterop;
 using MudBlazor;
 using ReportAnalizerWASM.Client.Models;
 using ReportAnalizerWASM.Client.Services;
@@ -12,8 +13,9 @@ namespace ReportAnalizerWASM.Client.Pages
 {
     public partial class Home
     {
-        [Inject]
-        private IVentasService _ventasService { get; set; }
+        [Inject] private IVentasService _ventasService { get; set; }
+        [Inject] private IExportService _exportService { get; set; }
+        [Inject] private IJSRuntime _jsRuntime { get; set; } // Necesario para llamar al script
 
         private List<VentaItem> _ventasTodas = new();      // Todos los datos del archivo
         private List<VentaItem> _ventasFiltradas = new(); // Los datos que se ven en pantalla
@@ -138,6 +140,31 @@ namespace ReportAnalizerWASM.Client.Pages
                     return "";
                 })
                 .ToArray();
+        }
+
+        private async Task DescargarReporteContable()
+        {
+            if (!_ventasFiltradas.Any()) return;
+
+            // Excel en memoria usando el servicio
+            var archivoBytes = _exportService.GenerarReporteContable(_ventasFiltradas);
+
+            var base64 = Convert.ToBase64String(archivoBytes);
+            var nombreArchivo = $"Liquidacion_MP_{_rangoFechas.Start?.ToString("dd-MM-yy")}_al_{_rangoFechas.End?.ToString("dd-MM-yy")}.xlsx";
+
+            // Llamamos a la función JS que pusimos en el index.html
+            await _jsRuntime.InvokeVoidAsync("descargarArchivo", nombreArchivo, base64);
+        }
+        private async Task DescargarReporteRentabilidad()
+        {
+            if (!_ventasFiltradas.Any()) return;
+
+            var archivoBytes = _exportService.GenerarReporteRentabilidad(_ventasFiltradas);
+            var base64 = Convert.ToBase64String(archivoBytes);
+
+            var nombreArchivo = $"Rentabilidad_MP_{_rangoFechas.Start?.ToString("dd-MM-yy")}_al_{_rangoFechas.End?.ToString("dd-MM-yy")}.xlsx";
+
+            await _jsRuntime.InvokeVoidAsync("descargarArchivo", nombreArchivo, base64);
         }
     }
 }
