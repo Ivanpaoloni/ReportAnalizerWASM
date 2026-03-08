@@ -1,0 +1,52 @@
+﻿@page "/grilla"
+@using ReportAnalizerWASM.Client.Services
+@using ReportAnalizerWASM.Client.Models
+@inject AppStateService AppState
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <MudText Typo="Typo.h5" Class="mb-4">Detalle de Ventas</MudText>
+
+    @if (!AppState.VentasFiltradas.Any())
+    {
+        <MudAlert Severity="Severity.Info">No hay datos para mostrar. Por favor, carga un archivo en el Dashboard.</MudAlert>
+    }
+    else
+    {
+        <MudTable Items="@AppState.VentasFiltradas" Hover="true" Striped="true" Dense="true" Class="mb-4">
+            <HeaderContent>
+                <MudTh>Fecha</MudTh>
+                <MudTh>Nro. Operación</MudTh>
+                <MudTh>Detalle</MudTh>
+                <MudTh>Bruto Cobrado</MudTh>
+                <MudTh>Comisión MP</MudTh>
+                <MudTh>Impuestos</MudTh>
+                <MudTh>Neto en Cuenta</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Fecha">@context.Fecha.ToString("dd/MM/yyyy")</MudTd>
+                <MudTd DataLabel="Nro. Operación">@context.IdOperacion</MudTd>
+                <MudTd DataLabel="Detalle">@context.Producto</MudTd>
+                <MudTd DataLabel="Bruto Cobrado">@context.MontoBruto.ToString("C")</MudTd>
+                <MudTd DataLabel="Comisión MP" Style="color: red;">@context.MontoComisionMP.ToString("C")</MudTd>
+                <MudTd DataLabel="Impuestos" Style="color: red;">@context.MontoImpuestos.ToString("C")</MudTd>
+                <MudTd DataLabel="Neto en Cuenta" Style="color: green; font-weight: bold;">@context.MontoNeto.ToString("C")</MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+        </MudTable>
+    }
+</MudContainer>
+
+@code {
+    // Nos suscribimos a los cambios para que la tabla se actualice si cambian las fechas en otra página
+    protected override void OnInitialized()
+    {
+        AppState.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        AppState.OnChange -= StateHasChanged;
+    }
+}
