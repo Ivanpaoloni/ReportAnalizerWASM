@@ -18,26 +18,35 @@
 
             @if (_ventasTodas.Any())
             {
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Error"
+                           StartIcon="@Icons.Material.Filled.Delete"
+                           OnClick="LimpiarDatos">
+                    Limpiar Datos
+                </MudButton>
+
                 <MudDateRangePicker Label="Filtrar Período"
                                     DateRange="_rangoFechas"
                                     DateRangeChanged="OnRangoCambiado"
                                     Placeholder="Selecciona rango"
                                     Color="Color.Primary"
+                                    Variant="Variant.Outlined"
                                     Class="w-25" />
 
-                <MudButton Variant="Variant.Text"
+                <MudButton Variant="Variant.Outlined"
                            Color="Color.Success"
                            StartIcon="@Icons.Material.Filled.Download"
                            OnClick="DescargarReporteContable">
                     Exportar Contable
                 </MudButton>
                 
-                <MudButton Variant="Variant.Text" 
+                <MudButton Variant="Variant.Outlined" 
                            Color="Color.Info" 
                            StartIcon="@Icons.Material.Filled.PieChart"
                            OnClick="DescargarReporteRentabilidad">
                     Exportar Rentabilidad
                 </MudButton>
+
             }
         </MudStack>
         
