@@ -5,7 +5,7 @@
 @inject AppStateService AppState
 @implements IDisposable
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
     <MudText Typo="Typo.h5" Class="mb-4">Análisis Gráfico</MudText>
 
     @if (!AppState.VentasFiltradas.Any())
@@ -18,7 +18,7 @@
             <MudItem xs="12" md="8">
                 <MudPaper Class="pa-4" Style="height: 100%;">
                     <MudText Typo="Typo.h6">Evolución de Ventas</MudText>
-                    <MudChart ChartType="ChartType.Line" XAxisLabels="@_labelsEvolucion" ChartSeries="@_seriesEvolucion" Width="100%" Height="300px" />
+                    <MudChart ChartType="ChartType.Line" XAxisLabels="@_labelsEvolucion" ChartSeries="@_seriesEvolucion" Width="100%" Height="400px" />
                 </MudPaper>
             </MudItem>
 

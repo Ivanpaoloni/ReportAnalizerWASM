@@ -3,7 +3,7 @@
 
 <PageTitle>MP Analyzer - Dashboard</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
     <MudText Typo="Typo.h4" Color="Color.Primary" GutterBottom="true">Tablero de Control</MudText>
 
     <MudPaper Class="pa-4 mb-4" Elevation="3">
@@ -100,6 +100,10 @@
 
             <MudTabPanel Text="Detalle de Operaciones" Icon="@Icons.Material.Filled.TableRows">
                 <Grilla />
+            </MudTabPanel>
+
+            <MudTabPanel Text="Rentabilidad" Icon="@Icons.Material.Filled.TableRows">
+                <Productos />
             </MudTabPanel>
 
         </MudTabs>

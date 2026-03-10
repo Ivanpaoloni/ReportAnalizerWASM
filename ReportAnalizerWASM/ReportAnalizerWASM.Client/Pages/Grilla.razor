@@ -39,7 +39,7 @@
 </MudContainer>
 
 @code {
-    // Nos suscribimos a los cambios para que la tabla se actualice si cambian las fechas en otra página
+    // Suscripcion a cambios para que la tabla se actualice si cambian las fechas
     protected override void OnInitialized()
     {
         AppState.OnChange += StateHasChanged;

@@ -5,7 +5,6 @@ using Microsoft.JSInterop;
 using MudBlazor;
 using ReportAnalizerWASM.Client.Models;
 using ReportAnalizerWASM.Client.Services;
-using System.Globalization;
 
 namespace ReportAnalizerWASM.Client.Pages
 {
