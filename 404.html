@@ -15,71 +15,62 @@
 
 <body>
     <div id="app">
-        <div id="app">
-            <style>
-                /* Estilos solo para el loading (se borran al cargar la app) */
-                .loading-container {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100vh;
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                    align-items: center;
-                    background-color: #1a1a27; /* Fondo oscuro elegante */
-                    color: #ffffff;
-                    font-family: 'Roboto', sans-serif;
-                    z-index: 9999;
+        <style>
+            /* Fondo por defecto (Modo Claro) */
+            body {
+                background-color: #F5F6F8;
+                margin: 0;
+            }
+
+            /* Detecta si el sistema operativo está en Modo Oscuro */
+            @media (prefers-color-scheme: dark) {
+                body {
+                    background-color: #121212;
+                }
+            }
+
+            .splash-container {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            }
+
+            .mp-spinner {
+                width: 60px;
+                height: 60px;
+                border: 6px solid rgba(0, 158, 227, 0.2); /* Celeste transparente */
+                border-top-color: #009EE3; /* Celeste sólido de nuestra marca */
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin-bottom: 24px;
+            }
+
+            @keyframes spin {
+                0% {
+                    transform: rotate(0deg);
                 }
 
-                .spinner {
-                    width: 60px;
-                    height: 60px;
-                    border: 4px solid rgba(255, 255, 255, 0.1);
-                    border-left-color: #594ae2; /* Color Primario MudBlazor (Violeta/Azul) */
-                    border-radius: 50%;
-                    animation: spin 1s linear infinite;
-                    margin-bottom: 20px;
+                100% {
+                    transform: rotate(360deg);
                 }
+            }
 
-                .loading-text {
-                    font-size: 1.2rem;
-                    letter-spacing: 1px;
-                    opacity: 0.8;
-                    animation: pulse 2s infinite;
-                }
+            .loading-text {
+                color: #009EE3;
+                font-size: 1.5rem;
+                font-weight: bold;
+                letter-spacing: 1px;
+            }
+        </style>
 
-                @keyframes spin {
-                    to {
-                        transform: rotate(360deg);
-                    }
-                }
-
-                @keyframes pulse {
-                    0% {
-                        opacity: 0.5;
-                    }
-
-                    50% {
-                        opacity: 1;
-                    }
-
-                    100% {
-                        opacity: 0.5;
-                    }
-                }
-            </style>
-
-            <div class="loading-container">
-                <div class="spinner"></div>
-                <div class="loading-text">MP Analyzer</div>
-                <div style="font-size: 0.8rem; margin-top: 10px; color: #888;">Cargando motor financiero...</div>
-            </div>
+        <div class="splash-container">
+            <div class="mp-spinner"></div>
+            <div class="loading-text">MP Analyzer</div>
         </div>
     </div>
-
     <div id="blazor-error-ui">
         Ha ocurrido un error.
         <a href="" class="reload">Recargar</a>
