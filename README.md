@@ -20,6 +20,8 @@ Interfaz Adaptativa: Diseño moderno con MudBlazor, soporte para Modo Oscuro per
 
 Exportación Profesional: Genera reportes en Excel (.xlsx) listos para enviar al contador o para análisis interno de stock.
 
+Módulo de Clientes VIP: Identificación de compradores recurrentes y LTV (Lifetime Value).
+
 🛠️ Stack Tecnológico
 Frontend: .NET 8 (LongTerm) / Blazor WebAssembly.
 
@@ -31,11 +33,13 @@ Persistence: Blazored.LocalStorage.
 
 📈 Próximos Pasos (Roadmap)
 
-[ ] Módulo de Clientes VIP: Identificación de compradores recurrentes y LTV (Lifetime Value).
-
 [ ] Soporte Multitipo: Procesamiento automático de reportes de "Liquidaciones Contables".
 
 [ ] Configuración de Alícuotas: Personalización de tasas de IIBB por provincia.
-<img width="1920" height="960" alt="image" src="https://github.com/user-attachments/assets/c814a693-4140-4776-af9f-22b8688d79a9" />
-<img width="1920" height="961" alt="image" src="https://github.com/user-attachments/assets/1959672f-8355-4f06-8aa7-0f435e0462f0" />
-<img width="1920" height="961" alt="image" src="https://github.com/user-attachments/assets/07e09db7-804b-453c-b845-a175b1399b26" />
+<img width="1920" height="1440" alt="716shots_so" src="https://github.com/user-attachments/assets/611c12b6-f615-4181-aaf7-a37accfb18b7" />
+
+
+<img width="1920" height="1440" alt="468shots_so" src="https://github.com/user-attachments/assets/9ce68320-0773-4f3e-ada7-a0bca4e937b3" />
+
+
+<img width="1920" height="1440" alt="543shots_so" src="https://github.com/user-attachments/assets/c59a8a22-ec73-44d6-a614-9ae729dc261f" />
