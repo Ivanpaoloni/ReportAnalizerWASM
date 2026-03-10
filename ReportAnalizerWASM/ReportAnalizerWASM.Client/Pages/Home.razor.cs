@@ -5,13 +5,13 @@ using Microsoft.JSInterop;
 using MudBlazor;
 using ReportAnalizerWASM.Client.Models;
 using ReportAnalizerWASM.Client.Services;
-using System.Globalization;
 
 namespace ReportAnalizerWASM.Client.Pages
 {
     // IMPORTANTE: Agregamos IDisposable para manejar la memoria correctamente
     public partial class Home : IDisposable
     {
+        [Inject] private ISnackbar _snackbar { get; set; }
         [Inject] private IVentasService _ventasService { get; set; }
         [Inject] private IExportService _exportService { get; set; }
         [Inject] private IJSRuntime _jsRuntime { get; set; }
@@ -29,7 +29,8 @@ namespace ReportAnalizerWASM.Client.Pages
         private DateRange _rangoFechas => _appState.RangoFechas;
 
         private bool _cargando = false;
-        private string _error;
+        private bool _exportandoContable = false;
+        private bool _exportandoRentabilidad = false;
 
         protected override async Task OnInitializedAsync()
         {
@@ -56,7 +57,6 @@ namespace ReportAnalizerWASM.Client.Pages
         private async Task CargarExcel(IBrowserFile archivo)
         {
             _cargando = true;
-            _error = null;
 
             try
             {
@@ -69,11 +69,12 @@ namespace ReportAnalizerWASM.Client.Pages
 
                     // Guardamos en el estado global (esto actualiza toda la app al instante)
                     _appState.SetVentas(ventasCrudas);
+                    _snackbar.Add($"¡Éxito! Se analizaron {ventasCrudas.Count} operaciones.", Severity.Success);
                 }
             }
             catch (Exception ex)
             {
-                _error = $"Error crítico: {ex.Message}";
+                _snackbar.Add($"Error al procesar el Excel: {ex.Message}", Severity.Error);
             }
             finally
             {
@@ -84,7 +85,9 @@ namespace ReportAnalizerWASM.Client.Pages
         private async Task LimpiarDatos()
         {
             await _localStorage.RemoveItemAsync(CLAVE_DATOS);
-            _appState.LimpiarDatos(); // Le avisamos al estado central que borre todo
+            _appState.LimpiarDatos();
+
+            _snackbar.Add("Base de datos limpiada correctamente.", Severity.Normal);
         }
 
         private void OnRangoCambiado(DateRange rango)
@@ -93,23 +96,45 @@ namespace ReportAnalizerWASM.Client.Pages
             _appState.SetRangoFechas(rango);
         }
 
-        
+
         private async Task DescargarReporteContable()
         {
             if (!_ventasFiltradas.Any()) return;
-            var archivoBytes = _exportService.GenerarReporteContable(_ventasFiltradas);
-            var base64 = Convert.ToBase64String(archivoBytes);
-            var nombreArchivo = $"Liquidacion_MP_{_rangoFechas.Start?.ToString("dd-MM-yy")}_al_{_rangoFechas.End?.ToString("dd-MM-yy")}.xlsx";
-            await _jsRuntime.InvokeVoidAsync("descargarArchivo", nombreArchivo, base64);
+            _exportandoContable = true;
+            await Task.Delay(1);
+            try
+            {
+                var archivoBytes = _exportService.GenerarReporteContable(_ventasFiltradas);
+                var base64 = Convert.ToBase64String(archivoBytes);
+                var nombreArchivo = $"Liquidacion_MP_{_rangoFechas.Start?.ToString("dd-MM-yy")}_al_{_rangoFechas.End?.ToString("dd-MM-yy")}.xlsx";
+                await _jsRuntime.InvokeVoidAsync("descargarArchivo", nombreArchivo, base64);
+
+                _snackbar.Add("¡Reporte Contable descargado!", Severity.Success);
+            }
+            finally
+            {
+                _exportandoContable = false;
+            }
         }
 
         private async Task DescargarReporteRentabilidad()
         {
             if (!_ventasFiltradas.Any()) return;
-            var archivoBytes = _exportService.GenerarReporteRentabilidad(_ventasFiltradas);
-            var base64 = Convert.ToBase64String(archivoBytes);
-            var nombreArchivo = $"Rentabilidad_MP_{_rangoFechas.Start?.ToString("dd-MM-yy")}_al_{_rangoFechas.End?.ToString("dd-MM-yy")}.xlsx";
-            await _jsRuntime.InvokeVoidAsync("descargarArchivo", nombreArchivo, base64);
+            _exportandoRentabilidad = true;
+            await Task.Delay(1);
+            try
+            {
+                var archivoBytes = _exportService.GenerarReporteRentabilidad(_ventasFiltradas);
+                var base64 = Convert.ToBase64String(archivoBytes);
+                var nombreArchivo = $"Rentabilidad_MP_{_rangoFechas.Start?.ToString("dd-MM-yy")}_al_{_rangoFechas.End?.ToString("dd-MM-yy")}.xlsx";
+                await _jsRuntime.InvokeVoidAsync("descargarArchivo", nombreArchivo, base64);
+                _snackbar.Add("¡Reporte de Rentabilidad descargado!", Severity.Success);
+            }
+            finally
+            {
+                _exportandoRentabilidad = false;
+            }
+
         }
     }
 }

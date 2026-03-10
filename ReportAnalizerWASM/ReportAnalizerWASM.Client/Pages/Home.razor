@@ -3,7 +3,7 @@
 
 <PageTitle>MP Analyzer - Dashboard</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
     <MudText Typo="Typo.h4" Color="Color.Primary" GutterBottom="true">Tablero de Control</MudText>
 
     <MudPaper Class="pa-4 mb-4" Elevation="3">
@@ -25,12 +25,30 @@
                 <MudDateRangePicker Label="Filtrar Período" DateRange="_rangoFechas" DateRangeChanged="OnRangoCambiado"
                                     Placeholder="Selecciona rango" Color="Color.Primary" Variant="Variant.Outlined" Class="w-25" />
 
-                <MudButton Variant="Variant.Outlined" Color="Color.Success" StartIcon="@Icons.Material.Filled.Download" OnClick="DescargarReporteContable">
-                    Exportar Contable
+                <MudButton Variant="Variant.Outlined" Color="Color.Success" Disabled="@_exportandoContable" OnClick="DescargarReporteContable">
+                    @if (_exportandoContable)
+                    {
+                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                        <MudText Class="ms-2">Generando...</MudText>
+                    }
+                    else
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.Download" Class="mr-2" />
+                        <MudText>Exportar Contable</MudText>
+                    }
                 </MudButton>
 
-                <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.PieChart" OnClick="DescargarReporteRentabilidad">
-                    Exportar Rentabilidad
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" Disabled="@_exportandoRentabilidad" OnClick="DescargarReporteRentabilidad">
+                    @if (_exportandoRentabilidad)
+                    {
+                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                        <MudText Class="ms-2">Generando...</MudText>
+                    }
+                    else
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.PieChart" Class="mr-2" />
+                        <MudText>Exportar Rentabilidad</MudText>
+                    }
                 </MudButton>
             }
         </MudStack>
@@ -41,11 +59,6 @@
             <MudText Typo="Typo.caption">Procesando datos...</MudText>
         }
     </MudPaper>
-
-    @if (_error != null)
-    {
-        <MudAlert Severity="Severity.Error" Class="mb-4">@_error</MudAlert>
-    }
 
     @if (_ventasFiltradas.Any())
     {
@@ -87,6 +100,10 @@
 
             <MudTabPanel Text="Detalle de Operaciones" Icon="@Icons.Material.Filled.TableRows">
                 <Grilla />
+            </MudTabPanel>
+
+            <MudTabPanel Text="Rentabilidad" Icon="@Icons.Material.Filled.TableRows">
+                <Productos />
             </MudTabPanel>
 
         </MudTabs>

@@ -1,4 +1,5 @@
 ﻿@inherits LayoutComponentBase
+@inject Blazored.LocalStorage.ILocalStorageService _localStorage
 
 <MudThemeProvider @bind-IsDarkMode="@_isDarkMode" Theme="_theme" />
 <MudPopoverProvider />
@@ -7,7 +8,7 @@
 
 <MudLayout>
 
-    <MudAppBar Elevation="1" Fixed="true" Color="Color.Dark">
+    <MudAppBar Elevation="1" Fixed="true" Color="Color.Inherit">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
 
         <MudText Typo="Typo.h6" Class="ml-3">Panel Financiero</MudText>
@@ -17,7 +18,7 @@
         <MudTooltip Text="@(_isDarkMode ? "Cambiar a Modo Claro" : "Cambiar a Modo Oscuro")">
             <MudIconButton Icon="@(_isDarkMode? Icons.Material.Filled.Brightness7 : Icons.Material.Filled.Brightness4)"
                            Color="Color.Inherit"
-                           OnClick="@((e) => _isDarkMode = !_isDarkMode)" />
+                           OnClick="ToggleDarkMode" />
         </MudTooltip>
     </MudAppBar>
 
@@ -26,24 +27,40 @@
     </MudDrawer>
 
     <MudMainContent>
-        <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
             @Body
-        </MudContainer>
     </MudMainContent>
 
 </MudLayout>
 
 @code {
-    private bool _drawerOpen = true; // Controla si el menú lateral está abierto
-    private bool _isDarkMode = true; // Arranca en modo oscuro (más pro)
+    private bool _drawerOpen = true;
+    private bool _isDarkMode = true; // Por defecto arrancamos en oscuro
+    private const string CLAVE_TEMA = "preferencia_modo_oscuro";
+
     private MudTheme _theme = new MudTheme()
     {
         PaletteDark = new PaletteDark()
         {
-            Primary = Colors.Blue.Lighten1, // Cambia el violeta por azul en modo oscuro
-            AppbarBackground = "#1a1a27" // Un fondo oscuro elegante para la barra
+            Primary = Colors.Blue.Lighten1,
+            AppbarBackground = "#1a1a27"
         }
     };
+
+    // 1. Al abrir la app, buscamos qué eligió el usuario la última vez
+    protected override async Task OnInitializedAsync()
+    {
+        if (await _localStorage.ContainKeyAsync(CLAVE_TEMA))
+        {
+            _isDarkMode = await _localStorage.GetItemAsync<bool>(CLAVE_TEMA);
+        }
+    }
+
+    // 2. Método que cambia el tema y lo guarda al instante
+    private async Task ToggleDarkMode()
+    {
+        _isDarkMode = !_isDarkMode;
+        await _localStorage.SetItemAsync(CLAVE_TEMA, _isDarkMode);
+    }
 
     private void DrawerToggle()
     {

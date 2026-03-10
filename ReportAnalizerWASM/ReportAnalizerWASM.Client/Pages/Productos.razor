@@ -1,0 +1,104 @@
+﻿@page "/productos"
+@using ReportAnalizerWASM.Client.Services
+@using ReportAnalizerWASM.Client.Models
+@inject AppStateService AppState
+@implements IDisposable
+
+<PageTitle>MP Analyzer - Rentabilidad por Producto</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <MudText Typo="Typo.h4" Color="Color.Primary" GutterBottom="true">Rentabilidad Comercial</MudText>
+    <MudText Typo="Typo.subtitle1" Class="mb-4">Análisis de márgenes, comisiones e impuestos a nivel de inventario.</MudText>
+
+    @if (!AppState.VentasFiltradas.Any())
+    {
+        <MudAlert Severity="Severity.Info">No hay datos para analizar. Por favor, carga un archivo en el Dashboard.</MudAlert>
+    }
+    else
+    {
+        <MudDataGrid Items="@_productosAgrupados" Filterable="true" SortMode="SortMode.Multiple" Elevation="3">
+            <Columns>
+                <PropertyColumn Property="x => x.Nombre" Title="Producto" />
+                <PropertyColumn Property="x => x.CantidadVentas" Title="Cant. Vendida" />
+
+                <PropertyColumn Property="x => x.MontoBrutoTotal" Title="Ingreso Bruto" Format="C0" />
+
+                <PropertyColumn Property="x => x.ComisionesTotal" Title="Comisiones MP" Format="C0" CellStyle="color: #d32f2f;" />
+                <PropertyColumn Property="x => x.ImpuestosTotal" Title="Impuestos" Format="C0" CellStyle="color: #d32f2f;" />
+
+                <PropertyColumn Property="x => x.GananciaNetaTotal" Title="Ganancia Neta" Format="C0" CellStyle="color: green; font-weight:bold;" SortBy="x => x.GananciaNetaTotal" InitialDirection="SortDirection.Descending" />
+
+                <PropertyColumn Property="x => x.MargenPorcentaje" Title="Margen Neto" Format="P2">
+                    <CellTemplate>
+                        @{
+                            // Lógica visual: Verde (>50% de margen), Naranja (>20%), Rojo (Peligro)
+                            var color = context.Item.MargenPorcentaje > 0.5m ? "green" : (context.Item.MargenPorcentaje > 0.2m ? "orange" : "red");
+                        }
+                        <span style="color: @color; font-weight: bold;">
+                            @context.Item.MargenPorcentaje.ToString("P2")
+                        </span>
+                    </CellTemplate>
+                </PropertyColumn>
+            </Columns>
+            <PagerContent>
+                <MudDataGridPager T="ResumenProducto" />
+            </PagerContent>
+        </MudDataGrid>
+    }
+</MudContainer>
+
+@code {
+    private List<ResumenProducto> _productosAgrupados = new();
+
+    protected override void OnInitialized()
+    {
+        AppState.OnChange += ActualizarTabla;
+        ActualizarTabla(); // Calculamos al entrar a la página
+    }
+
+    public void Dispose()
+    {
+        AppState.OnChange -= ActualizarTabla; // Limpieza de memoria
+    }
+
+    private void ActualizarTabla()
+    {
+        if (!AppState.VentasFiltradas.Any())
+        {
+            _productosAgrupados.Clear();
+            StateHasChanged();
+            return;
+        }
+
+        // Agrupamos por nombre de producto y sumamos los totales
+        _productosAgrupados = AppState.VentasFiltradas
+            .GroupBy(v => string.IsNullOrWhiteSpace(v.Producto) ? "Varios / Sin Nombre" : v.Producto)
+            .Select(g => new ResumenProducto
+            {
+                Nombre = g.Key,
+                CantidadVentas = g.Count(),
+                MontoBrutoTotal = g.Sum(x => x.MontoBruto),
+                ComisionesTotal = g.Sum(x => x.MontoComisionMP),
+                ImpuestosTotal = g.Sum(x => x.MontoImpuestos),
+                GananciaNetaTotal = g.Sum(x => x.MontoNeto)
+            })
+            .OrderByDescending(p => p.GananciaNetaTotal) // Ordenamos por el que deja más plata neta
+            .ToList();
+
+        StateHasChanged();
+    }
+
+    // Clase auxiliar para la grilla
+    public class ResumenProducto
+    {
+        public string Nombre { get; set; }
+        public int CantidadVentas { get; set; }
+        public decimal MontoBrutoTotal { get; set; }
+        public decimal ComisionesTotal { get; set; }
+        public decimal ImpuestosTotal { get; set; }
+        public decimal GananciaNetaTotal { get; set; }
+
+        // El cálculo estrella: Qué porcentaje del Bruto se convierte en Neto (ej: 0.75 = 75%)
+        public decimal MargenPorcentaje => MontoBrutoTotal > 0 ? (GananciaNetaTotal / MontoBrutoTotal) : 0;
+    }
+}
