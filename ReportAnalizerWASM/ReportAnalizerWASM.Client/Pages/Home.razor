@@ -87,7 +87,8 @@ else
                 <MudDateRangePicker Label="Filtrar Período" DateRange="_rangoFechas" DateRangeChanged="OnRangoCambiado"
                                     Placeholder="Selecciona rango" Color="Color.Primary" Variant="Variant.Outlined" Class="w-25" />
 
-                <MudButton Variant="Variant.Outlined" Color="Color.Success" Disabled="@_exportandoContable" OnClick="DescargarReporteContable">
+                <MudButton Variant="Variant.Outlined" Color="Color.Success" Disabled="@_exportandoContable" OnClick="DescargarReporteContable"
+                title="Exportar excel contable para rendir impuestos">
                     @if (_exportandoContable)
                     {
                         <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
@@ -100,7 +101,8 @@ else
                     }
                 </MudButton>
 
-                <MudButton Variant="Variant.Outlined" Color="Color.Info" Disabled="@_exportandoRentabilidad" OnClick="DescargarReporteRentabilidad">
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" Disabled="@_exportandoRentabilidad" OnClick="DescargarReporteRentabilidad" 
+                title="Exportar excel de rentabilidad para analisis de productos">
                     @if (_exportandoRentabilidad)
                     {
                         <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
@@ -169,6 +171,10 @@ else
 
                 <MudTabPanel Text="Rentabilidad" Icon="@Icons.Material.Filled.Store">
                     <Productos />
+                </MudTabPanel>
+
+                <MudTabPanel Text="Mejores Clientes" Icon="@Icons.Material.Filled.Groups">
+                    <Clientes />
                 </MudTabPanel>
             </MudTabs>
         }

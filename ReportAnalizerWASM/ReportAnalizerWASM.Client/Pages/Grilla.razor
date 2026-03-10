@@ -4,7 +4,12 @@
 @inject AppStateService AppState
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
-    <MudText Typo="Typo.h5" Class="mb-4">Detalle de Ventas</MudText>
+    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-4">
+        <MudStack Spacing="0">
+            <MudText Typo="Typo.h4" Color="Color.Primary" GutterBottom="true">Detalle de ventas</MudText>
+            <MudText Typo="Typo.subtitle1">Listado de ventas con desglose impositivo.</MudText>
+        </MudStack>
+    </MudStack>
 
     @if (!AppState.VentasFiltradas.Any())
     {

@@ -6,8 +6,12 @@
 @implements IDisposable
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
-    <MudText Typo="Typo.h5" Class="mb-4">Análisis Gráfico</MudText>
-
+    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-4">
+        <MudStack Spacing="0">
+            <MudText Typo="Typo.h4" Color="Color.Primary" GutterBottom="true">Análisis grafico</MudText>
+            <MudText Typo="Typo.subtitle1" >Graficos y estadisticas de ventas.</MudText>
+        </MudStack>
+    </MudStack>
     @if (!AppState.VentasFiltradas.Any())
     {
         <MudAlert Severity="Severity.Info">No hay datos para mostrar. Carga un archivo en el Dashboard.</MudAlert>

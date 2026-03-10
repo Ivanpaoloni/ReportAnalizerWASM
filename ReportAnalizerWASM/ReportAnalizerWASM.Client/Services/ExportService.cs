@@ -6,7 +6,8 @@ namespace ReportAnalizerWASM.Client.Services
     public interface IExportService
     {
         public byte[] GenerarReporteContable(List<VentaItem> ventas);
-        public byte[] GenerarReporteRentabilidad(List<VentaItem> ventas);
+        public byte[] GenerarReporteRentabilidad(List<VentaItem> ventas); 
+        public byte[] GenerarCSVClientes(List<VentaItem> ventas);
     }
 
     public class ExportService : IExportService
@@ -135,6 +136,31 @@ namespace ReportAnalizerWASM.Client.Services
             using var stream = new MemoryStream();
             workbook.SaveAs(stream);
             return stream.ToArray();
+        }
+        public byte[] GenerarCSVClientes(List<VentaItem> ventas)
+        {
+            var clientes = ventas
+                .Where(v => !string.IsNullOrEmpty(v.Comprador))
+                .GroupBy(v => v.Comprador)
+                .Select(g => new
+                {
+                    Email = g.Key,
+                    Compras = g.Count(),
+                    TotalInvertido = g.Sum(x => x.MontoNeto)
+                })
+                .OrderByDescending(x => x.TotalInvertido);
+
+            var csv = new System.Text.StringBuilder();
+            // Cabecera del CSV
+            csv.AppendLine("Email;Cantidad de Compras;Total Neto Aportado");
+
+            foreach (var cliente in clientes)
+            {
+                // Usamos punto y coma para que Excel en español lo abra directo en columnas
+                csv.AppendLine($"{cliente.Email};{cliente.Compras};{cliente.TotalInvertido.ToString("F2")}");
+            }
+
+            return System.Text.Encoding.UTF8.GetBytes(csv.ToString());
         }
     }
 }
