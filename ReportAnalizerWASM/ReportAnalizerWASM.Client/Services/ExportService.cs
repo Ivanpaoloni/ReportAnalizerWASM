@@ -6,7 +6,7 @@ namespace ReportAnalizerWASM.Client.Services
     public interface IExportService
     {
         public byte[] GenerarReporteContable(List<VentaItem> ventas);
-        public byte[] GenerarReporteRentabilidad(List<VentaItem> ventas); 
+        public byte[] GenerarReporteRentabilidad(List<VentaItem> ventas);
     }
 
     public class ExportService : IExportService
@@ -40,7 +40,6 @@ namespace ReportAnalizerWASM.Client.Services
                 worksheet.Cell(fila, 2).Value = venta.IdOperacion;
                 worksheet.Cell(fila, 3).Value = venta.Producto;
 
-                // CORRECCIÓN: Casteamos explícitamente a (double) para evitar el bug de escala de ClosedXML
                 worksheet.Cell(fila, 4).Value = (double)venta.MontoBruto;
                 worksheet.Cell(fila, 4).Style.NumberFormat.Format = "$ #,##0.00";
 
@@ -56,14 +55,15 @@ namespace ReportAnalizerWASM.Client.Services
             // 3. Estética: Auto-ajustar columnas y crear formato de tabla
             var rangoDatos = worksheet.Range(1, 1, fila - 1, cabeceras.Length);
             var tabla = rangoDatos.CreateTable();
-            tabla.Theme = XLTableTheme.TableStyleMedium2; // Un diseño azul profesional
+            tabla.Theme = XLTableTheme.TableStyleMedium2;
             worksheet.Columns().AdjustToContents();
 
-            // 4. Convertir a Bytes para enviarlo al navegador
+            // 4. Convertir a Bytes
             using var stream = new MemoryStream();
             workbook.SaveAs(stream);
             return stream.ToArray();
         }
+
         public byte[] GenerarReporteRentabilidad(List<VentaItem> ventas)
         {
             using var workbook = new XLWorkbook();
@@ -93,13 +93,15 @@ namespace ReportAnalizerWASM.Client.Services
                     Producto = g.Key,
                     Unidades = g.Count(),
                     FacturacionBruta = g.Sum(x => x.MontoBruto),
-                    // Usamos Math.Abs para que los costos se vean como números positivos en el reporte
                     Comisiones = g.Sum(x => Math.Abs(x.MontoComisionMP)),
                     Impuestos = g.Sum(x => Math.Abs(x.MontoImpuestos)),
-                    Envios = g.Sum(x => Math.Abs(x.MontoEnvio)),
+
+                    // CORRECCIÓN: Aquí es donde cambiamos MontoEnvio por CostoEnvio
+                    Envios = g.Sum(x => Math.Abs(x.CostoEnvio)),
+
                     GananciaNeta = g.Sum(x => x.MontoNeto)
                 })
-                .OrderByDescending(x => x.GananciaNeta) // Los más rentables arriba
+                .OrderByDescending(x => x.GananciaNeta)
                 .ToList();
 
             // 3. Llenado Seguro de Celdas
@@ -115,11 +117,9 @@ namespace ReportAnalizerWASM.Client.Services
                 worksheet.Cell(fila, 6).Value = (double)item.Envios;
                 worksheet.Cell(fila, 7).Value = (double)item.GananciaNeta;
 
-                // Cálculo del Margen de Ganancia
                 decimal margen = item.FacturacionBruta > 0 ? (item.GananciaNeta / item.FacturacionBruta) : 0;
                 worksheet.Cell(fila, 8).Value = (double)margen;
 
-                // Formateo visual
                 worksheet.Range(fila, 3, fila, 7).Style.NumberFormat.Format = "$ #,##0.00";
                 worksheet.Cell(fila, 8).Style.NumberFormat.Format = "0.00%";
 
@@ -129,7 +129,7 @@ namespace ReportAnalizerWASM.Client.Services
             // 4. Estética de la Tabla
             var rangoDatos = worksheet.Range(1, 1, fila - 1, cabeceras.Length);
             var tabla = rangoDatos.CreateTable();
-            tabla.Theme = XLTableTheme.TableStyleMedium15; // Un tono azul/gris distinto al otro reporte
+            tabla.Theme = XLTableTheme.TableStyleMedium15;
             worksheet.Columns().AdjustToContents();
 
             using var stream = new MemoryStream();
