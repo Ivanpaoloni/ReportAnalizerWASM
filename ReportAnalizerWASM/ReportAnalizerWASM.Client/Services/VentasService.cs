@@ -1,7 +1,6 @@
 ﻿using ExcelDataReader;
-using System.Text.RegularExpressions;
-using ReportAnalizerWASM.Client.Models;
 using Microsoft.AspNetCore.Components.Forms;
+using ReportAnalizerWASM.Client.Models;
 using System.Globalization;
 
 namespace ReportAnalizerWASM.Client.Services
@@ -11,146 +10,88 @@ namespace ReportAnalizerWASM.Client.Services
         public async Task<List<VentaItem>> ProcesarArchivoVentas(IBrowserFile archivo)
         {
             var ventas = new List<VentaItem>();
+            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-            using var stream = archivo.OpenReadStream(maxAllowedSize: 20 * 1024 * 1024);
-            using var ms = new MemoryStream();
-            await stream.CopyToAsync(ms);
-            ms.Position = 0;
+            using var stream = new MemoryStream();
+            await archivo.OpenReadStream(maxAllowedSize: 15 * 1024 * 1024).CopyToAsync(stream);
+            stream.Position = 0;
 
-            using var reader = ExcelReaderFactory.CreateReader(ms);
+            using var reader = ExcelReaderFactory.CreateReader(stream);
 
-            int anioReporte = DateTime.Now.Year;
-
-            int filasLeidas = 0;
-            while (reader.Read() && filasLeidas < 8)
+            // 1. Mapeo de Columnas
+            reader.Read();
+            var columnas = new Dictionary<string, int>();
+            for (int i = 0; i < reader.FieldCount; i++)
             {
-                for (int i = 0; i < reader.FieldCount; i++)
-                {
-                    var celda = reader.GetValue(i)?.ToString() ?? "";
-                    var matchAño = Regex.Match(celda, @"202[0-9]");
-                    if (matchAño.Success && int.TryParse(matchAño.Value, out int a))
-                    {
-                        anioReporte = a;
-                        break;
-                    }
-                }
-                filasLeidas++;
+                var nombre = reader.GetValue(i)?.ToString()?.Trim().ToLower() ?? "";
+                if (!string.IsNullOrEmpty(nombre)) columnas[nombre] = i;
             }
-            reader.Reset();
 
-            // 2. MAPEO DE COLUMNAS
-            bool cabeceraEncontrada = false;
-            int cOperacion = -1, cFecha = -1, cCobro = -1, cResumen = -1, cImpuestos = -1, cNeto = -1, cProd = -1;
+            int colFecha = BuscarColumna(columnas, "fecha de acreditación", "date_approved");
+            int colProducto = BuscarColumna(columnas, "descripción de la operación", "reason");
+            int colEmail = BuscarColumna(columnas, "e-mail de la contraparte", "counterpart_email");
+            int colEstado = BuscarColumna(columnas, "estado de la operación", "status");
+            int colTipoOp = BuscarColumna(columnas, "tipo de operación", "operation_type");
+            int colBruto = BuscarColumna(columnas, "valor del producto", "transaction_amount");
+            int colComision = BuscarColumna(columnas, "tarifa de mercado pago", "mercadopago_fee");
+            int colEnvio = BuscarColumna(columnas, "costo de envío", "shipping_cost");
+            int colNeto = BuscarColumna(columnas, "monto recibido", "net_received_amount");
+            int colId = BuscarColumna(columnas, "número de operación", "operation_id");
 
+            // 2. Procesamiento de Filas
             while (reader.Read())
             {
-                if (!cabeceraEncontrada)
+                // FILTRO A: Solo aprobadas
+                var estado = ObtenerString(reader, colEstado);
+                if (!estado.Contains("approved", StringComparison.OrdinalIgnoreCase)) continue;
+
+                // FILTRO B: Solo ventas reales (Ignoramos account_fund, withdraw, etc.)
+                var tipoOp = ObtenerString(reader, colTipoOp);
+                if (tipoOp != "regular_payment" && tipoOp != "pos_payment") continue;
+
+                var bruto = ObtenerDecimal(reader, colBruto);
+                var comision = Math.Abs(ObtenerDecimal(reader, colComision));
+                var envio = Math.Abs(ObtenerDecimal(reader, colEnvio));
+                var neto = ObtenerDecimal(reader, colNeto);
+
+                // Cálculo de impuestos (Diferencia entre lo que debería haber y lo que hay)
+                var impuestos = bruto - comision - envio - neto;
+                if (impuestos < 0) impuestos = 0;
+
+                ventas.Add(new VentaItem
                 {
-                    for (int i = 0; i < reader.FieldCount; i++)
-                    {
-                        var v = reader.GetValue(i)?.ToString() ?? "";
-                        if (v == "Número de operación") cOperacion = i;
-                        if (v == "Fecha de la compra") cFecha = i;
-                        if (v == "Cobro") cCobro = i;
-                        if (v == "Resumen") cResumen = i;
-                        if (v == "Cargos e impuestos") cImpuestos = i;
-                        if (v == "Total a recibir") cNeto = i;
-                        if (v == "Descripción del ítem") cProd = i;
-                    }
-                    if (cOperacion != -1) cabeceraEncontrada = true;
-                }
-                else
-                {
-                    var item = new VentaItem();
-                    item.IdOperacion = reader.GetValue(cOperacion)?.ToString();
-
-                    if (!string.IsNullOrEmpty(item.IdOperacion))
-                    {
-                        var objFecha = cFecha != -1 ? reader.GetValue(cFecha) : null;
-                        if (objFecha is DateTime fechaYaLista)
-                        {
-                            item.Fecha = fechaYaLista;
-                        }
-                        else
-                        {
-                            item.FechaRaw = objFecha?.ToString() ?? "";
-                            item.Fecha = ParsearFechaMP(item.FechaRaw, anioReporte);
-                        }
-
-                        if (item.Fecha.Year < 2000)
-                        {
-                            item.Fecha = DateTime.Now;
-                        }
-
-                        // LECTURA DE DINERO PRINCIPAL
-                        item.MontoBruto = cCobro != -1 ? ParsearDinero(reader.GetValue(cCobro)) : 0;
-                        item.MontoCostosTotal = cImpuestos != -1 ? ParsearDinero(reader.GetValue(cImpuestos)) : 0;
-                        item.MontoNeto = cNeto != -1 ? ParsearDinero(reader.GetValue(cNeto)) : 0;
-
-                        // TEXTO SUCIO PARA DESGLOSE
-                        item.DesgloseFiscal = cResumen != -1 ? reader.GetValue(cResumen)?.ToString() : "";
-                        item.Producto = cProd != -1 ? reader.GetValue(cProd)?.ToString() : "Varios";
-
-                        ventas.Add(item);
-                    }
-                }
+                    IdOperacion = ObtenerString(reader, colId),
+                    Fecha = ObtenerFecha(reader, colFecha),
+                    Producto = ObtenerString(reader, colProducto),
+                    Comprador = ObtenerString(reader, colEmail),
+                    MontoBruto = bruto,
+                    MontoComisionMP = comision,
+                    MontoImpuestos = impuestos,
+                    CostoEnvio = envio,
+                    MontoNeto = neto
+                });
             }
-
-            return ventas.OrderByDescending(x => x.Fecha).ToList();
+            return ventas;
         }
 
-        private decimal ParsearDinero(object valorCelda)
+        private int BuscarColumna(Dictionary<string, int> cols, params string[] nombres) =>
+            cols.FirstOrDefault(c => nombres.Any(n => c.Key.Contains(n))).Value;
+
+        private decimal ObtenerDecimal(IExcelDataReader r, int i)
         {
-            if (valorCelda == null) return 0;
-
-            // 1. Si Excel lo entiende como número, lo pasamos directo
-            if (valorCelda is double d) return (decimal)d;
-            if (valorCelda is decimal dec) return dec;
-            if (valorCelda is int i) return (decimal)i;
-
-            // 2. Si viene como texto ("$ 4.950,00"), lo limpiamos
-            var texto = valorCelda.ToString().Replace("$", "").Replace(" ", "").Trim();
-
-            // Forzamos cultura argentina para que entienda que la coma (,) son los centavos
-            if (decimal.TryParse(texto, NumberStyles.Any, CultureInfo.GetCultureInfo("es-AR"), out decimal numAr))
-                return numAr;
-
-            return 0;
+            if (i < 0 || r.IsDBNull(i)) return 0;
+            var val = r.GetValue(i).ToString()!.Replace("$", "").Trim();
+            return decimal.TryParse(val, NumberStyles.Any, new CultureInfo("en-US"), out var res) ? res :
+                   decimal.TryParse(val, NumberStyles.Any, new CultureInfo("es-AR"), out var res2) ? res2 : 0;
         }
 
-        private DateTime ParsearFechaMP(string fechaRaw, int anioContexto)
+        private string ObtenerString(IExcelDataReader r, int i) => i < 0 || r.IsDBNull(i) ? "" : r.GetValue(i).ToString()!.Trim();
+
+        private DateTime ObtenerFecha(IExcelDataReader r, int i)
         {
-            if (string.IsNullOrWhiteSpace(fechaRaw)) return DateTime.MinValue;
-
-            try
-            {
-                var texto = fechaRaw.ToLower().Replace(" hs", "").Trim();
-                texto = Regex.Replace(texto, @"[^\w\s:.]", "");
-
-                var meses = new Dictionary<string, int> {
-                    {"ene", 1}, {"jan", 1}, {"feb", 2}, {"mar", 3}, {"abr", 4}, {"apr", 4},
-                    {"may", 5}, {"jun", 6}, {"jul", 7}, {"ago", 8}, {"aug", 8},
-                    {"sep", 9}, {"set", 9}, {"oct", 10}, {"nov", 11}, {"dic", 12}, {"dec", 12}
-                };
-
-                var match = Regex.Match(texto, @"(\d{1,2})\s+([a-z]{3,4}).*?(\d{1,2}:\d{2})");
-
-                if (match.Success)
-                {
-                    int dia = int.Parse(match.Groups[1].Value);
-                    string mesStr = match.Groups[2].Value.Substring(0, 3);
-                    string horaStr = match.Groups[3].Value;
-
-                    int mes = meses.ContainsKey(mesStr) ? meses[mesStr] : 1;
-
-                    var fecha = new DateTime(anioContexto, mes, dia);
-                    var partesHora = horaStr.Split(':');
-                    return fecha.AddHours(int.Parse(partesHora[0])).AddMinutes(int.Parse(partesHora[1]));
-                }
-            }
-            catch { }
-
-            return DateTime.MinValue;
+            if (i < 0 || r.IsDBNull(i)) return DateTime.Today;
+            var v = r.GetValue(i);
+            return v is DateTime dt ? dt : DateTime.TryParse(v?.ToString(), out var p) ? p : DateTime.Today;
         }
     }
 }

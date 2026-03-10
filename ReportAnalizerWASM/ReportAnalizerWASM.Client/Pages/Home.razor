@@ -140,7 +140,12 @@ else
 
                 <MudItem xs="12" sm="3">
                     <MudPaper Class="pa-4" Style="background-color:#d32f2f; color:white;">
-                        <MudText>Retenciones (IVA & IIBB)</MudText>
+                        <MudStack Row="true" AlignItems="AlignItems.Center">
+                            <MudText>Retenciones (Est.)</MudText>
+                            <MudTooltip Text="Calculado automáticamente por diferencia entre Bruto y Neto.">
+                                <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" />
+                            </MudTooltip>
+                        </MudStack>
                         <MudText Typo="Typo.h5">@_ventasFiltradas.Sum(x => x.MontoImpuestos).ToString("C")</MudText>
                     </MudPaper>
                 </MudItem>
