@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "ReportAnalizerWASM.Client",
   "resources": {
-    "hash": "sha256-gSCWmK9VF64vVz6xs8b6JN05KSciZg+iHXhbn+xxGCM=",
+    "hash": "sha256-/WPbAqEm7CL7zF4Wm1jFu+J2j4t09PQ2oi3IdK7KoUc=",
     "jsModuleNative": {
       "dotnet.native.js": "sha256-NljIbpK/1KCj0+knpX8U77Rbl5kTtfFIuFjK7AuczEw="
     },
@@ -58,7 +58,7 @@
       "System.ComponentModel.TypeConverter.wasm": "sha256-VN2fHoxc8ZWDTn2qQ3dTpmLa8lePGjYAv+kqoROXRUI=",
       "System.ComponentModel.wasm": "sha256-zlRXLCLsuF86BuQBMbgVqxEPtaoYgcI9P8b5Z+kgg1g=",
       "System.Console.wasm": "sha256-H3TycrQhszDlL+MVDK8jPQqRrj1ksMnzBSRMLOKrufo=",
-      "System.Data.Common.wasm": "sha256-oo0BkRzyedWA6+Q8hVxo17WwSagNkwRCH2R/Ub8VfMo=",
+      "System.Data.Common.wasm": "sha256-3NdlNqLMBGZJpB9LRXie/+Cqyw24bR+3F/UfxIkxiVY=",
       "System.Diagnostics.Debug.wasm": "sha256-VpN/AnE4whbYRoZQcbtqc76qlJoThsuAxzkLzpxiPDo=",
       "System.Diagnostics.DiagnosticSource.wasm": "sha256-hJMwbFhl+52RPmKffEd/FIrLznM5DFOrorOKb6BBit0=",
       "System.Diagnostics.Tools.wasm": "sha256-kDg1BAhn0U2o45g9a6QCydpXX2ELmdBFGj88yz79kR0=",
@@ -98,7 +98,7 @@
       "System.wasm": "sha256-jXhnUNHzjjL7Plo7WcHuX7V5Dc/Umt+qmGGC+Js76SE=",
       "netstandard.wasm": "sha256-EaQJ4u1znthpZiUv3L+Mqp2hy9WRh7/Bbh5MhOYxeIw=",
       "System.Private.CoreLib.wasm": "sha256-hZKFSAf6s3fl0MCBjriBkqxhYfvuwjdOC/fwaOnnXq8=",
-      "ReportAnalizerWASM.Client.wasm": "sha256-UVe4cF6EXDGdhiA5GBd4e0x9DjpSWKGOzmvYl1aMdKI="
+      "ReportAnalizerWASM.Client.wasm": "sha256-h8Jv3Bb1fPPSuVT4nYFaSpJe+B1WOEDqiSH0FeoOqXo="
     }
   },
   "cacheBootResources": true,
