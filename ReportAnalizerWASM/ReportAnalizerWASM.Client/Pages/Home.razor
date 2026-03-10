@@ -1,23 +1,85 @@
 ﻿@page "/"
 @using ReportAnalizerWASM.Client.Models
+@using ReportAnalizerWASM.Client.Services
+@inject AppStateService AppState
 
 <PageTitle>MP Analyzer - Dashboard</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
-    <MudText Typo="Typo.h4" Color="Color.Primary" GutterBottom="true">Tablero de Control</MudText>
+@if (!_ventasTodas.Any())
+{
+    <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-16">
+        <MudPaper Class="pa-12 text-center" Elevation="3" Style="border-radius: 24px;">
 
-    <MudPaper Class="pa-4 mb-4" Elevation="3">
-        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+            <MudIcon Icon="@Icons.Material.Filled.QueryStats" Color="Color.Primary" Style="font-size: 7rem;" Class="mb-4 opacity-75" />
+
+            <MudText Typo="Typo.h3" Color="Color.Primary" GutterBottom="true" Style="font-weight: bold;">MP Analyzer</MudText>
+            <MudText Typo="Typo.h6" Color="Color.Surface" Class="mb-10" Style="opacity: 0.8;">
+                La claridad financiera de tu negocio, al instante.
+            </MudText>
+
+            <MudGrid Class="mb-10 text-left" Justify="Justify.Center" Spacing="4">
+                <MudItem xs="12" md="4">
+                    <MudPaper Outlined="true" Class="pa-6 d-flex flex-column align-start"
+                              Style="border-radius: 12px; height: 100%; background-color: var(--mud-palette-surface);">
+                        <MudText Typo="Typo.h1" Color="Color.Primary" Style="font-weight: 800; font-size: 5rem; margin-top: -15px; margin-left: -5px;">1</MudText>
+                        <MudText Typo="Typo.h6" Class="mt-1" Style="font-weight: bold;">Exporta</MudText>
+                        <MudText Typo="Typo.body2" Class="mt-2 opacity-80">Ve a MP > Informes > Ventas y descarga el reporte.</MudText>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12" md="4">
+                    <MudPaper Outlined="true" Class="pa-6 d-flex flex-column align-start"
+                              Style="border-radius: 12px; height: 100%; background-color: var(--mud-palette-surface);">
+                        <MudText Typo="Typo.h1" Color="Color.Primary" Style="font-weight: 800; font-size: 5rem; margin-top: -15px; margin-left: -5px;">2</MudText>
+                        <MudText Typo="Typo.h6" Class="mt-1" Style="font-weight: bold;">Carga</MudText>
+                        <MudText Typo="Typo.body2" Class="mt-2 opacity-80">Sube el archivo Excel crudo haciendo clic abajo.</MudText>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12" md="4">
+                    <MudPaper Outlined="true" Class="pa-6 d-flex flex-column align-start"
+                              Style="border-radius: 12px; height: 100%; background-color: var(--mud-palette-surface);">
+                        <MudText Typo="Typo.h1" Color="Color.Primary" Style="font-weight: 800; font-size: 5rem; margin-top: -15px; margin-left: -5px;">3</MudText>
+                        <MudText Typo="Typo.h6" Class="mt-1" Style="font-weight: bold;">Analiza</MudText>
+                        <MudText Typo="Typo.body2" Class="mt-2 opacity-80">Obtén tu margen neto y comisiones al instante.</MudText>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+
             <MudFileUpload T="IBrowserFile" Accept=".xlsx" FilesChanged="CargarExcel">
                 <ActivatorContent>
-                    <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.TableView">
-                        Cargar Excel Ventas
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" StartIcon="@Icons.Material.Filled.CloudUpload"
+                               Style="padding: 16px 40px; border-radius: 12px; font-weight: bold; box-shadow: 0px 8px 24px rgba(0, 158, 227, 0.3);">
+                        @if (_cargando)
+                        {
+                            <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                            <MudText Class="ms-2">Procesando archivo...</MudText>
+                        }
+                        else
+                        {
+                            <MudText>Subir Excel de Ventas</MudText>
+                        }
                     </MudButton>
                 </ActivatorContent>
             </MudFileUpload>
+        </MudPaper>
+    </MudContainer>
+}
+else
+{
+    <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+        <MudText Typo="Typo.h4" Color="Color.Primary" GutterBottom="true">Tablero de Control</MudText>
 
-            @if (_ventasTodas.Any())
-            {
+        <MudPaper Class="pa-4 mb-4" Elevation="3">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                <MudFileUpload T="IBrowserFile" Accept=".xlsx" FilesChanged="CargarExcel">
+                    <ActivatorContent>
+                        <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.TableView">
+                            Cargar Nuevo Excel
+                        </MudButton>
+                    </ActivatorContent>
+                </MudFileUpload>
+
                 <MudButton Variant="Variant.Outlined" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" OnClick="LimpiarDatos">
                     Limpiar Datos
                 </MudButton>
@@ -50,62 +112,64 @@
                         <MudText>Exportar Rentabilidad</MudText>
                     }
                 </MudButton>
+            </MudStack>
+
+            @if (_cargando)
+            {
+                <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mt-2" />
+                <MudText Typo="Typo.caption">Procesando datos...</MudText>
             }
-        </MudStack>
+        </MudPaper>
 
-        @if (_cargando)
+        @if (_ventasFiltradas.Any())
         {
-            <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mt-2" />
-            <MudText Typo="Typo.caption">Procesando datos...</MudText>
+            <MudGrid Class="mb-4">
+                <MudItem xs="12" sm="3">
+                    <MudPaper Class="pa-4 mud-theme-primary">
+                        <MudText>Ventas Brutas</MudText>
+                        <MudText Typo="Typo.h5">@_ventasFiltradas.Sum(x => x.MontoBruto).ToString("C")</MudText>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12" sm="3">
+                    <MudPaper Class="pa-4" Style="background-color:#d32f2f; color:white;">
+                        <MudText>Comisiones MP</MudText>
+                        <MudText Typo="Typo.h5">@_ventasFiltradas.Sum(x => x.MontoComisionMP).ToString("C")</MudText>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12" sm="3">
+                    <MudPaper Class="pa-4" Style="background-color:#d32f2f; color:white;">
+                        <MudText>Retenciones (IVA & IIBB)</MudText>
+                        <MudText Typo="Typo.h5">@_ventasFiltradas.Sum(x => x.MontoImpuestos).ToString("C")</MudText>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12" sm="3">
+                    <MudPaper Class="pa-4 mud-theme-success">
+                        <MudText>Ganancia Neta</MudText>
+                        <MudText Typo="Typo.h5">@_ventasFiltradas.Sum(x => x.MontoNeto).ToString("C")</MudText>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+
+            <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6" Class="mt-4 mb-8">
+                <MudTabPanel Text="Análisis Gráfico" Icon="@Icons.Material.Filled.Insights">
+                    <Graficos />
+                </MudTabPanel>
+
+                <MudTabPanel Text="Detalle de Operaciones" Icon="@Icons.Material.Filled.TableRows">
+                    <Grilla />
+                </MudTabPanel>
+
+                <MudTabPanel Text="Rentabilidad" Icon="@Icons.Material.Filled.Store">
+                    <Productos />
+                </MudTabPanel>
+            </MudTabs>
         }
-    </MudPaper>
-
-    @if (_ventasFiltradas.Any())
-    {
-        <MudGrid Class="mb-4">
-            <MudItem xs="12" sm="3">
-                <MudPaper Class="pa-4 mud-theme-primary">
-                    <MudText>Ventas Brutas</MudText>
-                    <MudText Typo="Typo.h5">@_ventasFiltradas.Sum(x => x.MontoBruto).ToString("C")</MudText>
-                </MudPaper>
-            </MudItem>
-
-            <MudItem xs="12" sm="3">
-                <MudPaper Class="pa-4" Style="background-color:#d32f2f; color:white;">
-                    <MudText>Comisiones MP</MudText>
-                    <MudText Typo="Typo.h5">@_ventasFiltradas.Sum(x => x.MontoComisionMP).ToString("C")</MudText>
-                </MudPaper>
-            </MudItem>
-
-            <MudItem xs="12" sm="3">
-                <MudPaper Class="pa-4" Style="background-color:#d32f2f; color:white;">
-                    <MudText>Retenciones (IVA & IIBB)</MudText>
-                    <MudText Typo="Typo.h5">@_ventasFiltradas.Sum(x => x.MontoImpuestos).ToString("C")</MudText>
-                </MudPaper>
-            </MudItem>
-
-            <MudItem xs="12" sm="3">
-                <MudPaper Class="pa-4 mud-theme-success">
-                    <MudText>Ganancia Neta</MudText>
-                    <MudText Typo="Typo.h5">@_ventasFiltradas.Sum(x => x.MontoNeto).ToString("C")</MudText>
-                </MudPaper>
-            </MudItem>
-        </MudGrid>
-
-        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6" Class="mt-4 mb-8">
-
-            <MudTabPanel Text="Análisis Gráfico" Icon="@Icons.Material.Filled.Insights">
-                <Graficos />
-            </MudTabPanel>
-
-            <MudTabPanel Text="Detalle de Operaciones" Icon="@Icons.Material.Filled.TableRows">
-                <Grilla />
-            </MudTabPanel>
-
-            <MudTabPanel Text="Rentabilidad" Icon="@Icons.Material.Filled.TableRows">
-                <Productos />
-            </MudTabPanel>
-
-        </MudTabs>
-    }
-</MudContainer>
+        else
+        {
+            <MudAlert Severity="Severity.Warning" Class="mt-4">No hay ventas registradas en este rango de fechas.</MudAlert>
+        }
+    </MudContainer>
+}
