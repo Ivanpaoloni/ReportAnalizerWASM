@@ -30,6 +30,7 @@ Data Processing: ExcelDataReader & ClosedXML.
 Persistence: Blazored.LocalStorage.
 
 📈 Próximos Pasos (Roadmap)
+
 [ ] Módulo de Clientes VIP: Identificación de compradores recurrentes y LTV (Lifetime Value).
 
 [ ] Soporte Multitipo: Procesamiento automático de reportes de "Liquidaciones Contables".
