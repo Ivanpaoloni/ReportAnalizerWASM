@@ -7,9 +7,12 @@
 <PageTitle>MP Analyzer - Rentabilidad por Producto</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
-    <MudText Typo="Typo.h4" Color="Color.Primary" GutterBottom="true">Rentabilidad Comercial</MudText>
-    <MudText Typo="Typo.subtitle1" Class="mb-4">Análisis de márgenes, comisiones e impuestos a nivel de inventario.</MudText>
-
+    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-4">
+        <MudStack Spacing="0">
+            <MudText Typo="Typo.h4" Color="Color.Primary" GutterBottom="true">Rentabilidad Comercial</MudText>
+            <MudText Typo="Typo.subtitle1" >Análisis de márgenes, comisiones e impuestos a nivel de inventario.</MudText>
+        </MudStack>
+    </MudStack>
     @if (!AppState.VentasFiltradas.Any())
     {
         <MudAlert Severity="Severity.Info">No hay datos para analizar. Por favor, carga un archivo en el Dashboard.</MudAlert>

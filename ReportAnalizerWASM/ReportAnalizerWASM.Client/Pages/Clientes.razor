@@ -1,0 +1,111 @@
+﻿@page "/clientes"
+@using ReportAnalizerWASM.Client.Models
+@using ReportAnalizerWASM.Client.Services
+@inject AppStateService AppState
+@inject IExportService ExportService
+@inject IJSRuntime JS
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-4">
+        <MudStack Spacing="0">
+            <MudText Typo="Typo.h4" Color="Color.Primary" GutterBottom="true">Clientes</MudText>
+            <MudText Typo="Typo.subtitle1">Listado de clientes extraídos de movimientos.</MudText>
+        </MudStack>
+
+        @if (_clientesEstrella.Any())
+        {
+            <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="DescargarContactos" title="Exportá un listado de clientes y sacale el maximo rendimiento">
+                <MudIcon Icon="@Icons.Material.Filled.Download" Class="mr-2" />
+                <MudText>Exportar para Marketing (CSV)</MudText>
+            </MudButton>
+        }
+    </MudStack>
+
+    @if (!AppState.VentasFiltradas.Any())
+    {
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mt-4">
+            No hay datos para mostrar. Por favor, carga un archivo Excel en el Dashboard para ver el ranking de compradores.
+        </MudAlert>
+    }
+    else
+    {
+        <MudTable Items="@_clientesEstrella" SortLabel="Ordenar" Hover="true" Breakpoint="Breakpoint.Sm" Elevation="0"
+                  FixedHeader="true" Outlined="true" Class="mt-4">
+            <HeaderContent>
+                <MudTh>Comprador</MudTh>
+                <MudTh Style="text-align:center">Compras</MudTh>
+                <MudTh Style="text-align:right">Total Bruto</MudTh>
+                <MudTh Style="text-align:right">Ganancia Neta</MudTh>
+                <MudTh Style="text-align:right">Ticket Promedio</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Comprador">
+                    <MudStack Row="true" AlignItems="AlignItems.Center">
+                        <MudAvatar Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small">
+                            @(context.Email?.ToUpper().FirstOrDefault() ?? 'U')
+                        </MudAvatar>
+                        <MudText Typo="Typo.body2">@(string.IsNullOrEmpty(context.Email) ? "Sin Email" : context.Email)</MudText>
+                    </MudStack>
+                </MudTd>
+                <MudTd DataLabel="Compras" Style="text-align:center">
+                    <MudChip T="string" Color="Color.Info" Size="Size.Small" Variant="Variant.Text">@context.CantidadCompras</MudChip>
+                </MudTd>
+                <MudTd DataLabel="Total Bruto" Style="text-align:right">@context.TotalBruto.ToString("C")</MudTd>
+                <MudTd DataLabel="Ganancia Neta" Style="text-align:right">
+                    <MudText Color="Color.Success" Style="font-weight: bold;">@context.TotalNeto.ToString("C")</MudText>
+                </MudTd>
+                <MudTd DataLabel="Ticket Promedio" Style="text-align:right">@((context.TotalNeto / context.CantidadCompras).ToString("C"))</MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+</MudContainer>
+
+@code {
+    private List<ClienteSummary> _clientesEstrella = new();
+
+    protected override void OnInitialized()
+    {
+        CalcularClientes();
+        // IMPORTANTE: Asegurate que en AppStateService el evento se llame OnChange
+        AppState.OnChange += CalcularClientes;
+    }
+
+    private void CalcularClientes()
+    {
+        _clientesEstrella = AppState.VentasFiltradas
+            .Where(v => !string.IsNullOrEmpty(v.Comprador))
+            .GroupBy(v => v.Comprador)
+            .Select(g => new ClienteSummary
+            {
+                Email = g.Key,
+                CantidadCompras = g.Count(),
+                TotalBruto = g.Sum(x => x.MontoBruto),
+                TotalNeto = g.Sum(x => x.MontoNeto)
+            })
+            .OrderByDescending(x => x.TotalNeto)
+            .ToList();
+
+        StateHasChanged();
+    }
+
+    // Para evitar fugas de memoria, es buena práctica desuscribirse
+    public void Dispose()
+    {
+        AppState.OnChange -= CalcularClientes;
+    }
+    private async Task DescargarContactos()
+    {
+        var bytes = ExportService.GenerarCSVClientes(AppState.VentasFiltradas);
+        var fileName = $"Clientes_MP_Analyzer_{DateTime.Now:ddMMyyyy}.csv";
+
+        // Usamos el helper de JS que seguramente ya tenés para bajar archivos
+        await JS.InvokeVoidAsync("descargarArchivo", fileName, Convert.ToBase64String(bytes));
+    }
+    public class ClienteSummary
+    {
+        public string Email { get; set; } = "";
+        public int CantidadCompras { get; set; }
+        public decimal TotalBruto { get; set; }
+        public decimal TotalNeto { get; set; }
+    }
+}
