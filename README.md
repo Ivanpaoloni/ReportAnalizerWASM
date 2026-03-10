@@ -21,7 +21,7 @@ Interfaz Adaptativa: Diseño moderno con MudBlazor, soporte para Modo Oscuro per
 Exportación Profesional: Genera reportes en Excel (.xlsx) listos para enviar al contador o para análisis interno de stock.
 
 🛠️ Stack Tecnológico
-Frontend: .NET 9 / Blazor WebAssembly.
+Frontend: .NET 8 (LongTerm) / Blazor WebAssembly.
 
 UI Components: MudBlazor (Material Design).
 
