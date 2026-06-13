@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "ReportAnalizerWASM.Client",
   "resources": {
-    "hash": "sha256-QskZQBTVD6xRjwZAUjDVmq8f9Ag69AvQQ5PxngPcfLc=",
+    "hash": "sha256-Bk9VaV8TmYoeiki/RJ1OHXc0VpuIzXzbo0ekIfvT1P8=",
     "jsModuleNative": {
       "dotnet.native.js": "sha256-sn/g61GjVPhViOYQDkq1OMlk0eyS9r2Hi0qgU2o0HIU="
     },
@@ -98,7 +98,7 @@
       "System.wasm": "sha256-T4iprIGorUAo1X44AS78i81rjTVY995cbd5O+yc1VDY=",
       "netstandard.wasm": "sha256-M0M0ZXp/YuBYNaeC/U4tndEeDZVBPmrBe4GqcTEQcP8=",
       "System.Private.CoreLib.wasm": "sha256-r5pyV3xOCrU7IAlqka50rgODq6llF/EEhrCCDbQbrhM=",
-      "ReportAnalizerWASM.Client.wasm": "sha256-ZX7wQAsnbDSH1Bwbbd0Rz/s7bHcX8522DDLheHkeWnU="
+      "ReportAnalizerWASM.Client.wasm": "sha256-XOeffmnDnioC2s+WZRrdaqLmR5diZCZVnubUVRSLBBE="
     }
   },
   "cacheBootResources": true,
