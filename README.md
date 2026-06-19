@@ -1,13 +1,13 @@
-# MP Analyzer - Dashboard de Rentabilidad Real 🚀
+# MP Analyzer - Dashboard de Rentabilidad Real
 
 https://ivanpaoloni.github.io/ReportAnalizerWASM/
 
 MP Analyzer es una herramienta de Inteligencia de Negocios (BI) diseñada para vendedores de Mercado Pago en Argentina. Permite transformar los reportes de "Cobros" (comercialmente ricos pero contablemente confusos) en un tablero de control estratégico con márgenes netos reales.
 
-💡 El Problema
+El Problema
 Los reportes de Mercado Pago suelen mezclar ingresos por ventas, transferencias propias (DEBIN) y retenciones impositivas sin un desglose claro de rentabilidad por producto. Los comerciantes "venden mucho, pero no saben cuánto ganan" después de comisiones e impuestos.
 
-✨ Características Principales
+Características Principales
 Procesamiento Local: Los datos se procesan 100% en el navegador (Client-Side) mediante Blazor WebAssembly. Privacidad total: los datos financieros nunca tocan un servidor externo.
 
 Filtro Inteligente de Operaciones: Identifica y separa automáticamente ventas reales (regular_payment) de movimientos de fondos propios (account_fund), evitando duplicaciones de facturación.
@@ -22,7 +22,7 @@ Exportación Profesional: Genera reportes en Excel (.xlsx) listos para enviar al
 
 Módulo de Clientes VIP: Identificación de compradores recurrentes y LTV (Lifetime Value).
 
-🛠️ Stack Tecnológico
+Stack Tecnológico
 Frontend: .NET 8 (LongTerm) / Blazor WebAssembly.
 
 UI Components: MudBlazor (Material Design).
@@ -31,7 +31,7 @@ Data Processing: ExcelDataReader & ClosedXML.
 
 Persistence: Blazored.LocalStorage.
 
-📈 Próximos Pasos (Roadmap)
+Próximos Pasos (Roadmap)
 
 [ ] Soporte Multitipo: Procesamiento automático de reportes de "Liquidaciones Contables".
 
