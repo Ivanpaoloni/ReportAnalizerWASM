@@ -40,28 +40,15 @@
 
     private MudTheme _theme = new MudTheme()
     {
-        // COLORES PARA EL MODO CLARO (Mantenemos los que ya estaban bien)
         PaletteLight = new PaletteLight()
         {
-            Primary = "#009EE3",
-            Secondary = "#2D3277",
-            AppbarBackground = "#009EE3",
-            Background = "#F5F6F8",
-            Surface = "#FFFFFF",
-            DrawerBackground = "#FFFFFF", // Barra lateral blanca impecable
-            TextPrimary = "#333333"
+            Primary = Colors.BlueGray.Darken1,
+            Secondary = Colors.LightBlue.Default
         },
-        // COLORES PARA EL MODO OSCURO (Limpiamos los grises)
         PaletteDark = new PaletteDark()
         {
-            Primary = "#009EE3",
-            Secondary = "#E0E0E0",
-            AppbarBackground = "#111111", // Barra superior casi negra
-            Background = "#121212", // Fondo de la página negro clásico (estilo Spotify/Netflix)
-            Surface = "#1E1E1E", // Tarjetas en gris oscuro puro, sin tintes raros
-            DrawerBackground = "#161616", // <--- EL SECRETO: Barra lateral en gris muy oscuro
-            TextPrimary = "#FFFFFF",
-            TextSecondary = "#A0A0A0" // Textos secundarios más suaves
+            Primary = Colors.BlueGray.Lighten2,
+            Secondary = Colors.LightBlue.Default
         }
     };
 
